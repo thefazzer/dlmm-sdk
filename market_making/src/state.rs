@@ -219,19 +219,21 @@ pub struct PositionInfo {
 
 impl SinglePosition {
     pub fn new(lb_pair: Pubkey) -> Self {
-        SinglePosition {
+        Self {
             lb_pair,
-            rebalance_time: 0,
-            // token_x: Mint::default(),
-            // token_y: Mint::default(),
             lb_pair_state: LbPair::default(),
             bin_arrays: HashMap::new(),
             positions: vec![],
             position_pks: vec![],
             min_bin_id: 0,
             max_bin_id: 0,
+            rebalance_time: 0,
             last_update_timestamp: 0,
         }
+    }
+
+    pub fn inc_rebalance_time(&mut self) {
+        self.rebalance_time += 1;
     }
 }
 

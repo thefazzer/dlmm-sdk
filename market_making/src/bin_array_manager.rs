@@ -40,6 +40,11 @@ impl<'a> BinArrayManager<'a> {
         Ok((lower_bin_id, upper_bin_id))
     }
 
+    pub fn new(bin_arrays: &'a Vec<BinArray>) -> Self {
+        Self { bin_arrays }
+    }
+}
+
     /// Update reward + fee earning
     pub fn get_total_fee_pending(&self, position: &PositionV2) -> Result<(u64, u64)> {
         let (bin_arrays_lower_bin_id, bin_arrays_upper_bin_id) = self.get_lower_upper_bin_id()?;
