@@ -2,6 +2,9 @@
 
 use std::collections::VecDeque;
 use std::time::{SystemTime, UNIX_EPOCH};
+use chrono::{DateTime, Duration, Utc};
+use rust_decimal::Decimal;
+use crate::types::{Trade, MarketMakingError};
 
 const FLOW_HISTORY_SIZE: usize = 300; // 5 minutes
 
@@ -144,9 +147,125 @@ mod tests {
     }
 }
 
-use chrono::{DateTime, Duration, Utc};
-use rust_decimal::Decimal;
-use crate::types::{Trade, MarketMakingError};
+pub struct OrderFlowAnalyzer {
+    min_trade_size: Decimal,
+    max_trade_size: Decimal,
+    window_size: Duration,
+}
+
+impl OrderFlowAnalyzer {
+    pub fn new(min_trade_size: Decimal, max_trade_size: Decimal, window_size: Duration) -> Self {
+        Self {
+            min_trade_size,
+            max_trade_size,
+            window_size,
+        }
+    }
+
+    pub fn calculate_imbalance(&self, trades: &[Trade], now: DateTime<Utc>) -> Decimal {
+        if trades.is_empty() {
+            return Decimal::ZERO;
+        }
+
+        let filtered = self.filter_trades(trades);
+        let (buy_volume, sell_volume) = filtered.iter()
+            .fold((Decimal::ZERO, Decimal::ZERO), |(buy, sell), trade| {
+                if trade.is_buyer {
+                    (buy + trade.size, sell)
+                } else {
+                    (buy, sell + trade.size)
+                }
+            });
+
+        let total_volume = buy_volume + sell_volume;
+        if total_volume == Decimal::ZERO {
+            return Decimal::ZERO;
+        }
+
+        (buy_volume - sell_volume) / total_volume
+    }
+
+    pub fn filter_trades(&self, trades: &[Trade]) -> Vec<Trade> {
+        trades.iter()
+            .filter(|t| t.size >= self.min_trade_size && t.size <= self.max_trade_size)
+            .cloned()
+            .collect()
+    }
+}
+
+#[cfg(test)]
+mod analyzer_tests {
+    use super::*;
+    use rust_decimal_macros::dec;
+
+    #[test]
+    fn test_imbalance_calculation() {
+        let analyzer = OrderFlowAnalyzer::new(
+            dec!(0.01),
+            dec!(100.0),
+            Duration::minutes(5)
+        );
+
+        let now = Utc::now();
+        let trades = vec![
+            Trade {
+                timestamp: now,
+                price: dec!(100.0),
+                size: dec!(100.0),
+                is_buyer: true,
+                aggressor: crate::types::TradeAggressor::Buyer,
+            },
+            Trade {
+                timestamp: now,
+                price: dec!(100.0),
+                size: dec!(50.0),
+                is_buyer: false,
+                aggressor: crate::types::TradeAggressor::Seller,
+            },
+        ];
+
+        let imbalance = analyzer.calculate_imbalance(&trades, now);
+        assert!(imbalance > dec!(0));
+        assert!(imbalance <= dec!(1));
+    }
+
+    #[test]
+    fn test_trade_filtering() {
+        let analyzer = OrderFlowAnalyzer::new(
+            dec!(0.01),
+            dec!(100.0),
+            Duration::minutes(5)
+        );
+
+        let now = Utc::now();
+        let trades = vec![
+            Trade {
+                timestamp: now,
+                price: dec!(100.0),
+                size: dec!(0.001),  // Too small
+                is_buyer: true,
+                aggressor: crate::types::TradeAggressor::Buyer,
+            },
+            Trade {
+                timestamp: now,
+                price: dec!(100.0),
+                size: dec!(1000.0),  // Too large
+                is_buyer: true,
+                aggressor: crate::types::TradeAggressor::Buyer,
+            },
+            Trade {
+                timestamp: now,
+                price: dec!(100.0),
+                size: dec!(1.0),  // Just right
+                is_buyer: true,
+                aggressor: crate::types::TradeAggressor::Buyer,
+            },
+        ];
+
+        let filtered = analyzer.filter_trades(&trades);
+        assert_eq!(filtered.len(), 1);
+    }
+}
 
 pub struct OrderFlowAnalyzer {
     min_trade_size: Decimal,
