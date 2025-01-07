@@ -4,7 +4,7 @@ use std::collections::VecDeque;
 use std::time::{SystemTime, UNIX_EPOCH};
 use chrono::{DateTime, Duration, Utc};
 use rust_decimal::Decimal;
-use crate::types::{Trade, MarketMakingError};
+use market_making::types::{Quote, MarketMakingError}; // Updated import path
 
 const FLOW_HISTORY_SIZE: usize = 300; // 5 minutes
 

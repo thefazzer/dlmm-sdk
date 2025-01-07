@@ -78,15 +78,3 @@ pub struct OrderBookLevel {
     pub price: Decimal,
     pub size: Decimal,
 }
-
-#[derive(Error, Debug)]
-pub enum MarketMakingError {
-    #[error("Insufficient data points")]
-    InsufficientData,
-    #[error("Stale data detected")]
-    StaleData,
-    #[error("Invalid data quality")]
-    DataQuality,
-    #[error("Time series error")]
-    TimeSeries,
-}
