@@ -1,5 +1,5 @@
 use std::error::Error;
-use std::fmt::{self, Display, Formatter};
+use std::fmt::{self, Display, Formatter}; 
 use std::collections::VecDeque;
 use chrono::{DateTime, Duration, Utc};
 use rust_decimal::Decimal;
@@ -18,7 +18,7 @@ pub enum MarketMakingError {
     #[error("Data quality error: {0}")]
     DataQualityError(String),
     #[error("Insufficient data: {0}")]
-    InsufficientDataError(String), 
+    InsufficientDataError(String),
     #[error("Stale data: {0}")]
     StaleDataError(String),
     #[error("Validation error: {0}")]
