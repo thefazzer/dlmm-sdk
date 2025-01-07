@@ -2,7 +2,7 @@
 
 use chrono::{DateTime, Duration, Utc};
 use rust_decimal::Decimal;
-use crate::types::{Quote, MarketMakingError};
+use market_making::types::{Quote, MarketMakingError}; // Updated import path
 
 
 #[derive(Error, Debug)]
