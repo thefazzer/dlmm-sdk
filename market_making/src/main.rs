@@ -23,6 +23,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Duration;
+use thiserror::Error;
 
 #[macro_use]
 extern crate log;

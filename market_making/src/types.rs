@@ -32,12 +32,6 @@ pub struct VolatilityMetrics {
     pub forecast: Decimal,
 }
 
-pub struct OrderFlow {
-    pub trades: VecDeque<Trade>,
-    pub buy_volume: VecDeque<(u64, f64)>,  // (timestamp, volume)
-    pub sell_volume: VecDeque<(u64, f64)>,
-}
-
 #[derive(Debug, Clone)]
 pub struct Trade {
     pub timestamp: DateTime<Utc>,

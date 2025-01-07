@@ -3,7 +3,7 @@
 use chrono::{DateTime, Duration, Utc};
 use rust_decimal::Decimal;
 use market_making::types::{Quote, MarketMakingError}; // Updated import path
-
+use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum QuoteError {

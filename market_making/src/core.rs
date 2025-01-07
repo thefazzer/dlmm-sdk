@@ -171,7 +171,7 @@ impl Core {
 
     pub async fn init_user_ata(&self) -> Result<()> {
         let payer = read_keypair_file(self.wallet.clone().unwrap())
-            .map_err(|_| Error::msg("Requires a keypair file"))?;
+            .map_err(|_| <dyn Error>::msg("Requires a keypair file"))?;
         let program: Program<Arc<Keypair>> = create_program(
             self.provider.to_string(),
             self.provider.to_string(),
@@ -194,7 +194,7 @@ impl Core {
         let (event_authority, _bump) = derive_event_authority_pda();
         let lb_pair = state.lb_pair;
         let payer = read_keypair_file(self.wallet.clone().unwrap())
-            .map_err(|_| Error::msg("Requires a keypair file"))?;
+            .map_err(|_| <dyn Error>::msg("Requires a keypair file"))?;
         let program: Program<Arc<Keypair>> = create_program(
             self.provider.to_string(),
             self.provider.to_string(),
@@ -313,7 +313,7 @@ impl Core {
         let active_bin_array_idx = BinArray::bin_id_to_bin_array_index(lb_pair_state.active_id)?;
 
         let payer = read_keypair_file(self.wallet.clone().unwrap())
-            .map_err(|_| Error::msg("Requires a keypair file"))?;
+            .map_err(|_| <dyn Error>::msg("Requires a keypair file"))?;
         let program: Program<Arc<Keypair>> = create_program(
             self.provider.to_string(),
             self.provider.to_string(),
@@ -439,7 +439,7 @@ impl Core {
     ) -> Result<()> {
         // let state = self.get_state();
         let payer = read_keypair_file(self.wallet.clone().unwrap())
-            .map_err(|_| Error::msg("Requires a keypair file"))?;
+            .map_err(|_| <dyn Error>::msg("Requires a keypair file"))?;
         let program: Program<Arc<Keypair>> = create_program(
             self.provider.to_string(),
             self.provider.to_string(),
@@ -570,7 +570,7 @@ impl Core {
                 &program,
                 &builder,
             )
-            .map_err(|_| Error::msg("Cannot simulate tx"))?;
+            .map_err(|_| <dyn Error>::msg("Cannot simulate tx"))?;
             info!("deposit {amount_x} {amount_y} {position} {:?}", simulate_tx);
         } else {
             let signature = send_tx(
@@ -595,7 +595,7 @@ impl Core {
         let lb_pair_state = position.lb_pair_state;
 
         let payer = read_keypair_file(self.wallet.clone().unwrap())
-            .map_err(|_| Error::msg("Requires a keypair file"))?;
+            .map_err(|_| <dyn Error>::msg("Requires a keypair file"))?;
 
         let program: Program<Arc<Keypair>> = create_program(
             self.provider.to_string(),
@@ -679,7 +679,7 @@ impl Core {
         info!("shift right {}", state.lb_pair);
         let position = state.get_positions()?;
         if position.amount_x != 0 {
-            return Err(Error::msg("Amount x is not zero"));
+            return Err(<dyn Error>::msg("Amount x is not zero"));
         }
 
         info!("withdraw {}", state.lb_pair);
@@ -690,7 +690,7 @@ impl Core {
         let amount_y_for_buy = position
             .amount_y
             .safe_div(2)
-            .map_err(|_| Error::msg("Math is overflow"))?;
+            .map_err(|_| <dyn Error>::msg("Math is overflow"))?;
         let (amount_x, amount_y) = if amount_y_for_buy != 0 {
             info!("swap {}", state.lb_pair);
             let swap_event = self.swap(state, amount_y_for_buy, false, false).await?;
@@ -734,7 +734,7 @@ impl Core {
         // validate that y amount is zero
         let position = state.get_positions()?;
         if position.amount_y != 0 {
-            return Err(Error::msg("Amount y is not zero"));
+            return Err(<dyn Error>::msg("Amount y is not zero"));
         }
         info!("withdraw {}", state.lb_pair);
         // withdraw
@@ -744,7 +744,7 @@ impl Core {
         let amount_x_for_sell = position
             .amount_x
             .safe_div(2)
-            .map_err(|_| Error::msg("Math is overflow"))?;
+            .map_err(|_| <dyn Error>::msg("Math is overflow"))?;
         let (amount_x, amount_y) = if amount_x_for_sell != 0 {
             info!("swap {}", state.lb_pair);
             let swap_event = self.swap(state, amount_x_for_sell, true, false).await?;

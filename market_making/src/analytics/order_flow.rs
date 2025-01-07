@@ -1,12 +1,17 @@
 
-
 use std::collections::VecDeque;
 use std::time::{SystemTime, UNIX_EPOCH};
 use chrono::{DateTime, Duration, Utc};
 use rust_decimal::Decimal;
-use market_making::types::{Quote, MarketMakingError}; // Updated import path
+use market_making::types::{Quote, MarketMakingError, OrderFlowAnalyzer, Trade, TradeAggressor}; // Updated import path
 
 const FLOW_HISTORY_SIZE: usize = 300; // 5 minutes
+
+pub struct OrderFlow {
+    pub trades: VecDeque<Trade>,
+    pub buy_volume: VecDeque<(u64, f64)>,  // (timestamp, volume)
+    pub sell_volume: VecDeque<(u64, f64)>,
+}
 
 impl OrderFlow {
     pub fn new() -> Self {
