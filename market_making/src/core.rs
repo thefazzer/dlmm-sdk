@@ -895,3 +895,9 @@ mod core_test {
 
 use std::error::Error;
 use std::path::PathBuf;
+
+use anyhow::{Error, Result};
+
+// Replace Error::msg with anyhow::anyhow!
+// Example:
+.map_err(|_| anyhow!("Requires a keypair file"))?;
