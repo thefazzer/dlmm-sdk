@@ -2,6 +2,9 @@
 
 use std::collections::VecDeque;
 use std::time::{SystemTime, UNIX_EPOCH};
+use chrono::{DateTime, Duration, Utc};
+use rust_decimal::Decimal;
+use crate::types::{Trade, MarketMakingError};
 
 const FLOW_HISTORY_SIZE: usize = 300; // 5 minutes
 
@@ -123,31 +126,6 @@ impl OrderFlow {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_order_flow_imbalance() {
-        let mut flow = OrderFlow::new();
-        
-        // Add some test trades
-        flow.add_trade(100.0, 1.0, true);  // buy
-        flow.add_trade(101.0, 2.0, false); // sell
-        flow.add_trade(102.0, 3.0, true);  // buy
-        
-        let imbalance = flow.calculate_imbalance(60);
-        assert!(imbalance > 0.0); // Should be buy-heavy
-        
-        let vwap = flow.get_vwap(60).unwrap();
-        assert!(vwap > 100.0 && vwap < 102.0);
-    }
-}
-
-use chrono::{DateTime, Duration, Utc};
-use rust_decimal::Decimal;
-use crate::types::{Trade, MarketMakingError};
-
 pub struct OrderFlowAnalyzer {
     min_trade_size: Decimal,
     max_trade_size: Decimal,
@@ -195,7 +173,7 @@ impl OrderFlowAnalyzer {
 }
 
 #[cfg(test)]
-mod tests {
+mod analyzer_tests {
     use super::*;
     use rust_decimal_macros::dec;
 

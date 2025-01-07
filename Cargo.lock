@@ -2607,6 +2607,7 @@ dependencies = [
  "rand 0.8.5",
  "rand_distr",
  "routerify",
+ "rust_decimal",
  "serde",
  "serde_json",
  "shellexpand",
