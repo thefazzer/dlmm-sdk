@@ -1,5 +1,6 @@
 
 
+use thiserror::Error;
 use chrono::{DateTime, Duration, Utc};
 use rust_decimal::Decimal;
 use crate::types::{Quote, MarketMakingError};

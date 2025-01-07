@@ -1,7 +1,9 @@
 
+use rust_decimal::prelude::*;
+use rust_decimal::MathematicalOps;
+use crate::types::MarketMakingError;
 use chrono::Duration;
 use rust_decimal::Decimal;
-use crate::types::MarketMakingError;
 use std::collections::VecDeque;
 
 pub struct VolatilityCalculator {
