@@ -217,6 +217,20 @@ pub struct PositionInfo {
     pub last_update_timestamp: u64,
 }
 
+impl AllPosition {
+    pub fn new(config: &Vec<PairConfig>) -> Self {
+        let mut all_positions = HashMap::new();
+        for pair in config.iter() {
+            let pool_pk = Pubkey::from_str(&pair.pair_address).unwrap();
+            all_positions.insert(pool_pk, SinglePosition::new(pool_pk));
+        }
+        AllPosition {
+            all_positions,
+            tokens: HashMap::new(),
+        }
+    }
+}
+
 impl SinglePosition {
     pub fn new(lb_pair: Pubkey) -> Self {
         Self {
@@ -230,6 +244,23 @@ impl SinglePosition {
             rebalance_time: 0,
             last_update_timestamp: 0,
         }
+    }
+
+    pub fn get_min_out_amount_with_slippage_rate(
+        &self,
+        amount_in: u64,
+        swap_for_y: bool,
+    ) -> Result<u64> {
+        let lb_pair_state = self.lb_pair_state;
+        let price = get_price_from_id(lb_pair_state.active_id, lb_pair_state.bin_step)?;
+        let out_amount = Bin::get_amount_out(amount_in, price, swap_for_y)?;
+
+        let min_out_amount = out_amount
+            .checked_mul(BASIC_POINT_MAX - SLIPPAGE_RATE)
+            .unwrap()
+            .checked_div(BASIC_POINT_MAX)
+            .unwrap();
+        Ok(min_out_amount)
     }
 
     pub fn inc_rebalance_time(&mut self) {
