@@ -72,3 +72,9 @@ pub struct OrderBookLevel {
     pub price: Decimal,
     pub size: Decimal,
 }
+
+pub trait OrderFlowAnalysis {
+    fn new(min_trade_size: Decimal, max_trade_size: Decimal, window_size: Duration) -> Self;
+    fn calculate_imbalance(&self, trades: &[Trade], now: DateTime<Utc>) -> Decimal;
+    fn filter_trades(&self, trades: &[Trade]) -> Vec<Trade>;
+}

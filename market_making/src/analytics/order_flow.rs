@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use std::time::{SystemTime, UNIX_EPOCH};
 use chrono::{DateTime, Duration, Utc};
 use rust_decimal::Decimal;
-use market_making::types::{Quote, MarketMakingError, OrderFlowAnalyzer, Trade, TradeAggressor}; // Updated import path
+use market_making::types::{Quote, MarketMakingError, OrderFlowAnalyzer, Trade, TradeAggressor, OrderFlowAnalysis}; // Updated import path
 
 const FLOW_HISTORY_SIZE: usize = 300; // 5 minutes
 
@@ -117,8 +117,8 @@ impl OrderFlow {
     }
 }
 
-impl OrderFlowAnalyzer {
-    pub fn new(min_trade_size: Decimal, max_trade_size: Decimal, window_size: Duration) -> Self {
+impl OrderFlowAnalysis for OrderFlowAnalyzer {
+    fn new(min_trade_size: Decimal, max_trade_size: Decimal, window_size: Duration) -> Self {
         Self {
             min_trade_size,
             max_trade_size,
@@ -126,7 +126,7 @@ impl OrderFlowAnalyzer {
         }
     }
 
-    pub fn calculate_imbalance(&self, trades: &[Trade], now: DateTime<Utc>) -> Decimal {
+    fn calculate_imbalance(&self, trades: &[Trade], now: DateTime<Utc>) -> Decimal {
         if trades.is_empty() {
             return Decimal::ZERO;
         }
@@ -149,7 +149,7 @@ impl OrderFlowAnalyzer {
         (buy_volume - sell_volume) / total_volume
     }
 
-    pub fn filter_trades(&self, trades: &[Trade]) -> Vec<Trade> {
+    fn filter_trades(&self, trades: &[Trade]) -> Vec<Trade> {
         trades.iter()
             .filter(|t| t.size >= self.min_trade_size && t.size <= self.max_trade_size)
             .cloned()

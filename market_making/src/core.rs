@@ -1,3 +1,6 @@
+use std::vec::Vec;
+use anchor_client::solana_sdk::signature::Keypair;
+use anchor_client::solana_sdk::pubkey::Pubkey;
 use crate::pair_config::get_pair_config;
 use crate::pair_config::PairConfig;
 use crate::state::get_decimals;
@@ -60,24 +63,24 @@ impl Core {
             Arc::new(Keypair::new()),
         )?;
 
-        for pair in self.config.iter() {
+        for pair in &self.config {  // Changed to reference
             let pair_address = Pubkey::from_str(&pair.pair_address).unwrap();
             let lb_pair_state: LbPair = program.account(pair_address).await?;
-            // let token_x: Mint = program.account(lb_pair_state.token_x_mint).await?;
-            // let token_y: Mint = program.account(lb_pair_state.token_y_mint).await?;
-            // get all position with an user
-            let mut position_states = program
-                .accounts::<PositionV2>(vec![
-                    RpcFilterType::DataSize((8 + PositionV2::INIT_SPACE) as u64),
-                    RpcFilterType::Memcmp(Memcmp::new_raw_bytes(
-                        8 + 32,
-                        self.owner.to_bytes().to_vec(),
-                    )),
-                    RpcFilterType::Memcmp(Memcmp::new_raw_bytes(
-                        8,
-                        pair_address.to_bytes().to_vec(),
-                    )),
-                ])
+            
+            let filters = vec![
+                RpcFilterType::DataSize((8 + PositionV2::INIT_SPACE) as u64),
+                RpcFilterType::Memcmp(Memcmp::new_raw_bytes(
+                    8 + 32,
+                    self.owner.to_bytes().to_vec(),
+                )),
+                RpcFilterType::Memcmp(Memcmp::new_raw_bytes(
+                    8,
+                    pair_address.to_bytes().to_vec(),
+                )),
+            ];
+            
+            let position_states = program
+                .accounts::<PositionV2>(filters)
                 .await?;
             let mut position_pks = vec![];
             let mut positions = vec![];
