@@ -37,17 +37,4 @@ mod tests {
         assert!(vol.is_ok());
         assert!(vol.unwrap() > 0.0);
     }
-}(test)]
-mod tests {
-    use super::*;
-    
-    #[test]
-    fn test_quote_collection() {
-        // Test the Rust implementation directly
-    }
-    
-    #[test]
-    fn test_volatility_calculation() {
-        // Test the Rust implementation directly
-    }
 }

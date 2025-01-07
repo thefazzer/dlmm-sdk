@@ -8,20 +8,6 @@ use crate::types::{Trade, MarketMakingError};
 
 const FLOW_HISTORY_SIZE: usize = 300; // 5 minutes
 
-#[derive(Debug, Clone)]
-pub struct Trade {
-    pub timestamp: u64,
-    pub price: f64,
-    pub size: f64,
-    pub is_buy: bool,
-}
-
-pub struct OrderFlow {
-    pub trades: VecDeque<Trade>,
-    pub buy_volume: VecDeque<(u64, f64)>,  // (timestamp, volume)
-    pub sell_volume: VecDeque<(u64, f64)>,
-}
-
 impl OrderFlow {
     pub fn new() -> Self {
         Self {
@@ -124,12 +110,6 @@ impl OrderFlow {
         // Combine order imbalance with VWAP movement
         imbalance * vwap.signum()
     }
-}
-
-pub struct OrderFlowAnalyzer {
-    min_trade_size: Decimal,
-    max_trade_size: Decimal,
-    window_size: Duration,
 }
 
 impl OrderFlowAnalyzer {

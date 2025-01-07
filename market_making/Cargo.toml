@@ -29,5 +29,5 @@ tempfile = "3.2"
 rand_distr = "0.4"
 rand = "0.8"
 rust_decimal = { workspace = true }
-
+thiserror = { workspace = true }
 
