@@ -8,3 +8,10 @@
         "MM_CLUSTER": "https://api.devnet.solana.com"
     }
 }
+
+{
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/*.pyc": true
+    }
+}
