@@ -5,7 +5,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 const FLOW_HISTORY_SIZE: usize = 300; // 5 minutes
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Trade {
     pub timestamp: u64,
     pub price: f64,

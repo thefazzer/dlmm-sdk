@@ -1,19 +1,25 @@
 
 
 use std::collections::VecDeque;
-use std::f64;
+use chrono::Duration;
+use rust_decimal::Decimal;
+use crate::types::MarketMakingError;
 
 pub struct VolatilityCalculator {
-    price_history: VecDeque<(u64, f64)>, // (timestamp, price)
-    window_sizes: Vec<usize>,            // Different window sizes to track (e.g. 1min, 5min)
+    price_history: VecDeque<(u64, f64)>,
+    window_sizes: Vec<Duration>,
+    min_samples: usize,
+    max_gap_ratio: f64,
 }
 
 impl VolatilityCalculator {
-    pub fn new(window_sizes: Vec<usize>) -> Self {
-        let max_size = *window_sizes.iter().max().unwrap_or(&300);
+    pub fn new(window_sizes: Vec<Duration>, min_samples: usize, max_gap_ratio: f64) -> Self {
+        let max_size = window_sizes.len();
         Self {
             price_history: VecDeque::with_capacity(max_size),
             window_sizes,
+            min_samples,
+            max_gap_ratio,
         }
     }
 
