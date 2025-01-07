@@ -1,6 +1,7 @@
 use std::error::Error;
-use std::fmt;
-use chrono::{DateTime, Utc};
+use std::fmt::{self, Display, Formatter};
+use std::collections::VecDeque;
+use chrono::{DateTime, Duration, Utc};
 use rust_decimal::Decimal;
 use thiserror::Error;
 
@@ -12,24 +13,17 @@ pub struct Quote {
     pub is_stale: bool,
 }
 
-impl fmt::Display for MarketMakingError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            MarketMakingError::DataQualityError(msg) => write!(f, "Data quality error: {}", msg),
-            MarketMakingError::InsufficientDataError(msg) => write!(f, "Insufficient data: {}", msg),
-            MarketMakingError::StaleDataError(msg) => write!(f, "Stale data: {}", msg),
-            MarketMakingError::ValidationError(msg) => write!(f, "Validation error: {}", msg),
-        }
-    }
+#[derive(Error, Debug)]
+pub enum MarketMakingError {
+    #[error("Data quality error: {0}")]
+    DataQualityError(String),
+    #[error("Insufficient data: {0}")]
+    InsufficientDataError(String), 
+    #[error("Stale data: {0}")]
+    StaleDataError(String),
+    #[error("Validation error: {0}")]
+    ValidationError(String),
 }
-
-impl Display for MarketMakingError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.message)
-    }
-}
-
-impl Error for MarketMakingError {}
 
 #[derive(Debug)]
 pub struct VolatilityMetrics {
