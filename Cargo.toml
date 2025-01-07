@@ -27,6 +27,8 @@ ureq = "2.0.0"
 bincode = "1.3.3"
 commons = { path = "./commons" }
 thiserror = "1.0"
+num-traits = "0.2"
+ark-std = "0.4.0" 
 
 [profile.release]
 overflow-checks = true

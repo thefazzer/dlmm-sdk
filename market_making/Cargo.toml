@@ -30,4 +30,5 @@ rand_distr = "0.4"
 rand = "0.8"
 rust_decimal = { workspace = true }
 thiserror = { workspace = true }
-
+num-traits = { workspace = true }
+ark-std = { workspace = true } 
