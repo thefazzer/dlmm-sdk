@@ -895,3 +895,15 @@ mod core_test {
 
 use std::error::Error;
 use std::path::PathBuf;
+
+impl Core {
+    pub fn new(provider: Cluster, wallet: Option<String>, owner: Pubkey, config: Vec<PairConfig>) -> Self {
+        Self {
+            provider,
+            wallet,
+            owner,
+            config,
+            state: Arc::new(Mutex::new(AllPosition::new(&config))),
+        }
+    }
+}
