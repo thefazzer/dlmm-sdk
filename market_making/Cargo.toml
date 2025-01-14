@@ -26,3 +26,10 @@ solana-transaction-status={workspace=true}
 bs58 = {workspace=true}
 chrono={workspace=true}
 tempfile={workspace=true}
+time={workspace=true}
+rand_distr={workspace=true}
+rand={workspace=true}
+rust_decimal = { workspace = true }
+rust_decimal_macros = { workspace = true }
+thiserror = { workspace = true }
+num-traits={workspace=true}
