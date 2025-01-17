@@ -73,4 +73,11 @@ export class OrderFlow {
 
     return volumePriceSum.div(totalVolume);
   }
+
+  filterTrades(startTime: DateTime, endTime: DateTime): Trade[] {
+    return this.trades.filter(trade => 
+      trade.timestamp >= startTime && 
+      trade.timestamp <= endTime
+    );
+  }
 }
