@@ -53,6 +53,14 @@ export interface MarketMetrics {
 import * as t from 'io-ts';
 import { DateFromISOString } from 'io-ts-types';
 
+export interface AnalyticsConfig {
+  windowSize: number;
+  minSamples: number;
+  maxCacheSize: number;
+  logLevel: string;
+  performanceMonitoring: boolean;
+}
+
 export const QuoteCodec = t.type({
   timestamp: DateFromISOString,
   bid: t.number,

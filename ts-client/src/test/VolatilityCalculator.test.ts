@@ -3,11 +3,21 @@
 import { VolatilityCalculator } from '../analytics/VolatilityCalculator';
 import { Duration } from 'luxon'
 import { Decimal } from 'decimal.js';
+import { AnalyticsConfig } from '../analytics/types';
 
 describe('VolatilityCalculator', () => {
+  const config: AnalyticsConfig = {
+    windowSize: 300,
+    minSamples: 10,
+    maxCacheSize: 1000,
+    logLevel: 'error',
+    performanceMonitoring: false
+  };
+
   const calculator = new VolatilityCalculator(
     [Duration.fromObject({ minutes: 1 }), Duration.fromObject({ minutes: 5 })],
-    10
+    10,
+    config
   );
 
   describe('volatility calculation', () => {
