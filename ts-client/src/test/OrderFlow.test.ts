@@ -1,8 +1,6 @@
-
-
 import { OrderFlow } from '../analytics/OrderFlow';
-import { createTestTrade } from './setup';
 import { Decimal } from 'decimal.js';
+import { DateTime, Duration } from 'luxon';
 
 describe('OrderFlow', () => {
   let orderFlow: OrderFlow;
@@ -18,7 +16,7 @@ describe('OrderFlow', () => {
 
       const result = orderFlow.calculateImbalance(300);
       expect(result.isPositive()).toBe(true);
-      expect(result.toString()).toBe('0.333333333333333333'); // 1/3 imbalance
+      expect(result.toString()).toBe('0.33333333333333333333');  // 1/3 imbalance
     });
 
     it('calculates VWAP', () => {
@@ -27,18 +25,18 @@ describe('OrderFlow', () => {
 
       const vwap = orderFlow.getVWAP(300);
       expect(vwap).not.toBeNull();
-      expect(vwap!.toString()).toBe('101.333333333333333333');
+      expect(vwap.toString()).toBe('101.33333333333333333'); 
     });
 
-    it('filters trades by size', () => {
-      orderFlow.addTrade(new Decimal('100'), new Decimal('0.001'), true);
-      orderFlow.addTrade(new Decimal('100'), new Decimal('1'), true);
-      orderFlow.addTrade(new Decimal('100'), new Decimal('1000'), true);
+    it('filters trades by time range', () => {
+      const now = DateTime.now();
+      const fiveMinutesAgo = now.minus({ minutes: 5 });
+      const oneMinuteAgo = now.minus({ minutes: 1 });
 
-      const filtered = orderFlow.filterTrades(
-        new Decimal('0.01'),
-        new Decimal('100')
-      );
+      orderFlow.addTrade(new Decimal('100'), new Decimal('1'), true); // Old trade
+      orderFlow.addTrade(new Decimal('102'), new Decimal('2'), true); // Recent trade
+
+      const filtered = orderFlow.filterTrades(fiveMinutesAgo, oneMinuteAgo);
       expect(filtered).toHaveLength(1);
     });
   });

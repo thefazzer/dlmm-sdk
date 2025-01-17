@@ -61,10 +61,12 @@ export interface AnalyticsConfig {
   performanceMonitoring: boolean;
 }
 
+const isDecimal = (value: any): value is Decimal => value instanceof Decimal;
+
 export const QuoteCodec = t.type({
   timestamp: DateFromISOString,
-  bid: t.number,
-  ask: t.number,
+  bid: t.refinement(t.unknown, isDecimal), // Updated to use refinement
+  ask: t.refinement(t.unknown, isDecimal), // Updated to use refinement
   isStale: t.boolean
 });
 

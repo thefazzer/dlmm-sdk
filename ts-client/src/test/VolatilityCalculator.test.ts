@@ -1,43 +1,36 @@
-
-
 import { VolatilityCalculator } from '../analytics/VolatilityCalculator';
-import { Duration } from 'luxon'
+import { Duration } from 'luxon';
 import { Decimal } from 'decimal.js';
-import { AnalyticsConfig } from '../analytics/types';
 
 describe('VolatilityCalculator', () => {
-  const config: AnalyticsConfig = {
-    windowSize: 300,
-    minSamples: 10,
-    maxCacheSize: 1000,
-    logLevel: 'error',
-    performanceMonitoring: false
-  };
+  const minSamples = 10;
+  const windows = [
+    Duration.fromObject({ minutes: 1 }),
+    Duration.fromObject({ minutes: 5 }),
+  ];
 
-  const calculator = new VolatilityCalculator(
-    [Duration.fromObject({ minutes: 1 }), Duration.fromObject({ minutes: 5 })],
-    10,
-    config
-  );
+  const calculator = new VolatilityCalculator(windows, minSamples);
 
   describe('volatility calculation', () => {
     it('calculates volatility for valid price series', () => {
       const prices = Array.from(
-        { length: 20 }, 
+        { length: 20 },
         (_, i) => new Decimal(100).plus(i)
       );
-      
+
       const result = calculator.calculate(prices, Duration.fromObject({ minutes: 5 }));
       expect(result.isOk()).toBe(true);
-      expect(result.unwrap().isPositive()).toBe(true);
+
+      const volatility = result.unwrap();
+      expect(volatility.isPositive()).toBe(true);
     });
 
     it('handles insufficient data', () => {
       const prices = Array.from(
-        { length: 5 }, 
+        { length: 5 },
         (_, i) => new Decimal(100).plus(i)
       );
-      
+
       const result = calculator.calculate(prices, Duration.fromObject({ minutes: 1 }));
       expect(result.isErr()).toBe(true);
       expect(result.unwrapErr().message).toContain('Insufficient samples');
@@ -45,9 +38,10 @@ describe('VolatilityCalculator', () => {
 
     it('handles non-finite values', () => {
       const prices = [new Decimal('Infinity'), new Decimal(100)];
+
       const result = calculator.calculate(prices, Duration.fromObject({ minutes: 1 }));
       expect(result.isErr()).toBe(true);
-      expect(result.unwrapErr().message).toContain('Non-finite');
+      expect(result.unwrapErr().message).toContain('Non-finite price values');
     });
   });
 });

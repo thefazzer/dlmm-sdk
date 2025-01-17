@@ -1,4 +1,3 @@
-
 import { DateTime, Duration } from 'luxon';
 import { Decimal } from 'decimal.js';
 import { Trade, TradeAggressor } from './types';
@@ -11,13 +10,13 @@ export class OrderFlow {
 
   addTrade(price: Decimal, size: Decimal, isBuyer: boolean): void {
     const timestamp = DateTime.now().toUnixInteger();
-    
+
     const trade: Trade = {
       timestamp: DateTime.fromSeconds(timestamp),
       price,
       size,
       isBuyer,
-      aggressor: isBuyer ? TradeAggressor.Buyer : TradeAggressor.Seller
+      aggressor: isBuyer ? TradeAggressor.Buyer : TradeAggressor.Seller,
     };
 
     if (this.trades.length >= this.historySize) {
@@ -25,7 +24,7 @@ export class OrderFlow {
     }
     this.trades.push(trade);
 
-    const volume = this.isBuyer ? this.buyVolume : this.sellVolume;
+    const volume = isBuyer ? this.buyVolume : this.sellVolume; // Use parameter `isBuyer` here
     if (volume.size >= this.historySize) {
       const oldestKey = Math.min(...volume.keys());
       volume.delete(oldestKey);
@@ -41,9 +40,9 @@ export class OrderFlow {
     const sellSum = this.sumVolume(this.sellVolume, cutoff);
     const total = buySum.plus(sellSum);
 
-    return total.isZero() ? 
-      new Decimal(0) : 
-      buySum.minus(sellSum).div(total);
+    return total.isZero()
+      ? new Decimal(0)
+      : buySum.minus(sellSum).div(total);
   }
 
   private sumVolume(volume: Map<number, Decimal>, cutoff: number): Decimal {
@@ -56,27 +55,30 @@ export class OrderFlow {
     const now = DateTime.now().toUnixInteger();
     const cutoff = now - windowSecs;
 
-    const trades = this.trades.filter(t => 
+    const trades = this.trades.filter((t) =>
       t.timestamp.toUnixInteger() >= cutoff
     );
 
     if (!trades.length) return null;
 
-    const volumePriceSum = trades.reduce((sum, t) => 
-      sum.plus(t.price.mul(t.size)), new Decimal(0)
+    const volumePriceSum = trades.reduce(
+      (sum, t) => sum.plus(t.price.mul(t.size)),
+      new Decimal(0)
     );
 
-    const totalVolume = trades.reduce((sum, t) => 
-      sum.plus(t.size), new Decimal(0)
+    const totalVolume = trades.reduce(
+      (sum, t) => sum.plus(t.size),
+      new Decimal(0)
     );
 
     return volumePriceSum.div(totalVolume);
   }
 
   filterTrades(startTime: DateTime, endTime: DateTime): Trade[] {
-    return this.trades.filter(trade => 
-      trade.timestamp >= startTime && 
-      trade.timestamp <= endTime
+    return this.trades.filter(
+      (trade) =>
+        trade.timestamp >= startTime &&
+        trade.timestamp <= endTime
     );
   }
 }

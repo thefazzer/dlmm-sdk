@@ -1,37 +1,51 @@
-
-
-import { DateTime, Duration } from 'luxon';
 import { Quote } from './types';
-
-import { Result } from '../utils/result';
+import { Result } from './utils/result';
+import { DateTime, Duration } from 'luxon';
+import { Decimal } from 'decimal.js';
 
 export class QuoteCollector {
-  private readonly windowSize: Duration;
-  private readonly samplingInterval: Duration;
-  private readonly maxGapFill?: Duration;
+  constructor(
+    private readonly windowSize: Duration,
+    private readonly samplingInterval: Duration,
+    private readonly maxGapFill?: Duration
+  ) {}
 
-  constructor(windowSize: Duration, samplingInterval: Duration, maxGapFill?: Duration) {
-    this.windowSize = windowSize;
-    this.samplingInterval = samplingInterval;
-    this.maxGapFill = maxGapFill;
+  processQuotes(quotes: Quote[]): Result<Quote[], Error> {
+    try {
+      if (!quotes.length) return Result.ok([]);
+  
+      const sorted = [...quotes].sort((a, b) =>
+        DateTime.fromISO(a.timestamp).toMillis() - DateTime.fromISO(b.timestamp).toMillis()
+      );
+  
+      this.validateQuotes(sorted);
+  
+      const filledQuotes = this.fillGaps(sorted);
+      return Result.ok(filledQuotes);
+    } catch (error) {
+      console.error('Error in processQuotes:', error); // Add logging here
+      return Result.err(error instanceof Error ? error : new Error('Unknown error'));
+    }
   }
 
-  processQuotes(quotes: Quote[]): Quote[] {
-    if (!quotes.length) return [];
-
-    const sorted = [...quotes].sort((a, b) => 
-      a.timestamp.toMillis() - b.timestamp.toMillis()
-    );
-
-    this.validateQuotes(sorted);
-    return this.fillGaps(sorted);
+  detectPriceJumps(quotes: Quote[], threshold: Decimal): number[] {
+    const jumps: number[] = [];
+    for (let i = 1; i < quotes.length; i++) {
+      const priceDiff = quotes[i].bid.minus(quotes[i - 1].bid).abs();
+      const relativeJump = priceDiff.div(quotes[i - 1].bid);
+      if (relativeJump.greaterThan(threshold)) {
+        jumps.push(i);
+      }
+    }
+    return jumps;
   }
 
   private validateQuotes(quotes: Quote[]): void {
     const now = DateTime.now();
-    
+
     for (const quote of quotes) {
-      if (now.diff(quote.timestamp) > this.windowSize) {
+      const timestamp = DateTime.fromISO(quote.timestamp);
+      if (now.diff(timestamp) > this.windowSize) {
         throw new Error('Stale quote detected');
       }
       if (quote.bid.isNegative() || quote.ask.isNegative()) {
@@ -45,44 +59,34 @@ export class QuoteCollector {
 
   private fillGaps(quotes: Quote[]): Quote[] {
     if (!this.maxGapFill || quotes.length < 2) return quotes;
-    
+
     const result: Quote[] = [quotes[0]];
-    
+
     for (let i = 1; i < quotes.length; i++) {
-      const gap = quotes[i].timestamp.diff(quotes[i-1].timestamp);
-      
+      const prev = quotes[i - 1];
+      const curr = quotes[i];
+      const prevTimestamp = DateTime.fromISO(prev.timestamp);
+      const currTimestamp = DateTime.fromISO(curr.timestamp);
+      const gap = currTimestamp.diff(prevTimestamp);
+
       if (gap > this.maxGapFill) {
         throw new Error('Gap too large');
       }
-      
-      result.push(quotes[i]);
-    }
-    
-    return result;
-  processQuotes(quotes: Quote[]): Result<Quote[], Error> {
-    try {
-      if (!quotes.length) return Result.ok([]);
 
-      const sorted = [...quotes].sort((a, b) => 
-        a.timestamp.toMillis() - b.timestamp.toMillis()
-      );
-
-      this.validateQuotes(sorted);
-      return Result.ok(this.fillGaps(sorted));
-    } catch (error) {
-      return Result.err(error instanceof Error ? error : new Error('Unknown error'));
-    }
-  }
-
-  detectPriceJumps(quotes: Quote[], threshold: Decimal): number[] {
-    const jumps: number[] = [];
-    for (let i = 1; i < quotes.length; i++) {
-      const priceDiff = quotes[i].bid.minus(quotes[i-1].bid).abs();
-      const relativeJump = priceDiff.div(quotes[i-1].bid);
-      if (relativeJump.greaterThan(threshold)) {
-        jumps.push(i);
+      let nextTimestamp = prevTimestamp.plus(this.samplingInterval);
+      while (nextTimestamp < currTimestamp) {
+        result.push({
+          timestamp: nextTimestamp.toISO()!, // Convert back to ISO string
+          bid: prev.bid,
+          ask: prev.ask,
+          isStale: prev.isStale,
+        });
+        nextTimestamp = nextTimestamp.plus(this.samplingInterval);
       }
+
+      result.push(curr);
     }
-    return jumps;
+
+    return result;
   }
 }
