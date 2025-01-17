@@ -6,6 +6,9 @@ edition = "2021"
 authors = ["andrew <andrew@racoons.dev>"]
 
 [dependencies]
+clap_builder = {workspace=true}
+clap_derive = {workspace=true}
+litemap = {workspace=true}
 tokio = {workspace=true, features = ["full"] }
 hyper = { workspace=true, features = ["full"] }
 routerify = {workspace=true}
@@ -15,7 +18,7 @@ anchor-spl={workspace=true}
 anchor-lang={workspace=true}
 env_logger={workspace=true}
 log={workspace=true}
-clap = { workspace=true, features = ["derive"] }
+clap = { workspace=true}
 shellexpand = {workspace=true}
 anyhow = {workspace=true}
 lb_clmm =  { path = "../programs/lb_clmm", features = ["cpi"] }
