@@ -1,5 +1,6 @@
 [workspace]
 members = ["programs/*", "cli", "market_making", "commons"]
+rustflags = ["-A", "unused-variables"]
 resolver = "2"
 
 [workspace.dependencies]
