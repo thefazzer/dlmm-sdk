@@ -1,5 +1,7 @@
 {
   "dependencies": {
+    "io-ts": "^2.2.22",
+    "io-ts-types": "^0.5.19",
     "pako": "^2.1.0"
   }
 }

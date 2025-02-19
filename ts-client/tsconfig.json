@@ -1,9 +1,10 @@
 {
   "compilerOptions": {
     "outDir": "dist",
-    "types": ["jest"],
+    "sourceMap": true,
+    "types": ["jest", "node"],
     "typeRoots": ["./node_modules/@types"],
-    "module": "commonjs",
+    "module": "CommonJS",
     "target": "ESNext",
     "moduleResolution": "node",
     "esModuleInterop": true,
