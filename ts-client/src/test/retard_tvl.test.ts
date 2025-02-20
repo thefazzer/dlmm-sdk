@@ -27,30 +27,8 @@ async function fetchTokenPrices() {
   }
 }
 
-function getDynamicFee(dlmmInstance) {
-  let vParameterClone = Object.assign({}, dlmmInstance.lbPair.vParameters);
-  let activeId = new BN(dlmmInstance.lbPair.activeId);
-  const sParameters = dlmmInstance.lbPair.parameters;
-
-  const currentTimestamp = Date.now() / 1000;
-  dlmmInstance.updateReference(
-    activeId.toNumber(),
-    vParameterClone,
-    sParameters,
-    currentTimestamp
-  );
-  dlmmInstance.updateVolatilityAccumulator(
-    vParameterClone,
-    sParameters,
-    activeId.toNumber()
-  );
-
-  const totalFee = dlmmInstance.getTotalFee(
-    dlmmInstance.lbPair.binStep,
-    sParameters,
-    vParameterClone
-  );
-  return new Decimal(totalFee.toString()).div(new Decimal("1000000")).mul(100);
+function getDynamicFee(dlmmInstance: DLMM) {
+  return dlmmInstance.getDynamicFee();
 }
 
 describe("Meteora DLMM TVL Tests", () => {
