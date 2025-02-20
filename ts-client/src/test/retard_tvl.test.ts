@@ -52,18 +52,29 @@ async function get24hMetrics(connection: Connection, dlmmInstance: DLMM) {
     
     let volume24h = new BN(0);
     let fees24h = new BN(0);
-    
-    // Sum up volumes and fees from observations within last 24h
-    for (const observation of oracle.observations) {
-      if (observation.timestamp.toNumber() >= timestamp24hAgo) {
-        volume24h = volume24h.add(observation.volumeX).add(observation.volumeY);
-        fees24h = fees24h.add(observation.feeX).add(observation.feeY);
+
+    // Get the active sample size
+    const activeSize = oracle.activeSize.toNumber();
+    const latestIdx = oracle.idx.toNumber();
+
+    // Calculate the starting index for 24h ago
+    for (let i = 0; i < activeSize; i++) {
+      const idx = (latestIdx - i + oracle.samples.length) % oracle.samples.length;
+      const sample = oracle.samples[idx];
+      
+      if (sample.timestamp.toNumber() >= timestamp24hAgo) {
+        volume24h = volume24h.add(sample.volumeX).add(sample.volumeY);
+        fees24h = fees24h.add(sample.feeX).add(sample.feeY);
       }
     }
 
+    // Convert to USD using token prices
+    const volumeInUsd = volume24h.toNumber() / Math.pow(10, dlmmInstance.tokenX.decimal);
+    const feesInUsd = fees24h.toNumber() / Math.pow(10, dlmmInstance.tokenX.decimal);
+
     return {
-      volume24h: volume24h.toNumber() / 1e9, // Convert to standard units
-      fees24h: fees24h.toNumber() / 1e9 // Convert to standard units
+      volume24h: volumeInUsd,
+      fees24h: feesInUsd
     };
   } catch (error) {
     console.warn("Failed to fetch 24h metrics:", error);
@@ -105,20 +116,9 @@ describe("Meteora DLMM TVL Tests", () => {
         const reserveYPrice = tokenPrices.solana?.usd || 1;
         
         let poolTVL = (reserveX * reserveXPrice) + (reserveY * reserveYPrice);
-        let dynamicFee = getDynamicFee(dlmmInstance);
-        const binStep = dlmmInstance.lbPair.binStep / 100; // Convert to percentage
+        let dynamicFee = getDynamicFee(pair);
 
-        // Get 24h metrics
-        const { volume24h, fees24h } = await get24hMetrics(connection, dlmmInstance);
-        
-        console.log(
-          `Pool TVL: $${poolTVL.toFixed(2)}, ` +
-          `Bin Step: ${binStep}%, ` +
-          `Dynamic Fee: ${dynamicFee.toFixed(2)}%, ` +
-          `24h Volume: $${volume24h.toFixed(2)}, ` +
-          `24h Fees: $${fees24h.toFixed(2)}`
-        );
-        
+        console.log(`Pool TVL: $${poolTVL.toFixed(2)}, Dynamic Fee: ${dynamicFee.toFixed(2)}%`);
         totalTVL += poolTVL;
       }
 
