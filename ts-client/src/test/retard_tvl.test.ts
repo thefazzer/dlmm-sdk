@@ -56,7 +56,22 @@ describe("Meteora DLMM TVL Tests", () => {
         }
 
         for (const pair of RETARDIOSOLPairs) {
+          console.log("\n=== Pool Details ===");
+          console.log(`Pool Address: ${pair.publicKey.toString()}`);
+          console.log(`Token X Mint: ${pair.account.tokenXMint.toString()}`);
+          console.log(`Token Y Mint: ${pair.account.tokenYMint.toString()}`);
+          console.log(`Bin Step: ${pair.account.binStep}`);
+          console.log(`Base Factor: ${pair.account.baseFactor}`);
+          console.log(`Protocol Fee: ${pair.account.protocolFee}`);
+          console.log(`Fee: ${pair.account.fee}`);
+          console.log(`Active Bin: ${pair.account.activeBin}`);
+          console.log(`Bin Step SS: ${pair.account.binStepSs}`);
+
           const dlmmInstance = await DLMM.create(connection, pair.publicKey);
+          console.log("\n=== Reserve Details ===");
+          console.log(`Token X Reserve Address: ${dlmmInstance.tokenX.reserve.toString()}`);
+          console.log(`Token Y Reserve Address: ${dlmmInstance.tokenY.reserve.toString()}`);
+
           const reserveXInfo = await connection.getAccountInfo(dlmmInstance.tokenX.reserve);
           const reserveYInfo = await connection.getAccountInfo(dlmmInstance.tokenY.reserve);
           
@@ -64,18 +79,28 @@ describe("Meteora DLMM TVL Tests", () => {
           if (reserveXInfo?.data) {
             const decodedX = AccountLayout.decode(reserveXInfo.data);
             reserveX = parseFloat(decodedX.amount.toString());
+            console.log(`Token X Reserve Amount: ${reserveX}`);
           }
           if (reserveYInfo?.data) {
             const decodedY = AccountLayout.decode(reserveYInfo.data);
             reserveY = parseFloat(decodedY.amount.toString());
+            console.log(`Token Y Reserve Amount: ${reserveY}`);
           }
 
           // Convert reserves to USD value based on token prices
           const reserveXPrice = tokenPrices.retardio.usd
           const reserveYPrice = tokenPrices.solana.usd
           
+          console.log("\n=== Price Details ===");
+          console.log(`RETARDIO Price: $${reserveXPrice}`);
+          console.log(`SOL Price: $${reserveYPrice}`);
+          
           let poolTVL = (reserveX * reserveXPrice) + (reserveY * reserveYPrice);
-          console.log(`Adding TVL ${poolTVL}`);
+          console.log(`\n=== TVL Details ===`);
+          console.log(`Pool TVL: $${poolTVL.toFixed(2)}`);
+          console.log(`RETARDIO Value: $${(reserveX * reserveXPrice).toFixed(2)}`);
+          console.log(`SOL Value: $${(reserveY * reserveYPrice).toFixed(2)}`);
+          console.log("=====================================\n");
 
           totalTVL += poolTVL;
         }
