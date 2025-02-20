@@ -3,7 +3,6 @@ import { DLMM } from "../dlmm/index";
 import { AccountLayout } from "@solana/spl-token";
 import Decimal from "decimal.js";
 import BN from "bn.js";
-import { deriveOracle } from "../dlmm/helpers/derive";
 
 // Meteora DLMM Program ID
 const DLMM_PROGRAM_ID = new PublicKey("LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo");
@@ -28,79 +27,8 @@ async function fetchTokenPrices() {
   }
 }
 
-function getDynamicFee(pair) {
-  let vParameterClone = Object.assign({}, pair.vParameters);
-  let activeId = new BN(pair.activeId);
-  const sParameters = pair.parameters;
-
-  const currentTimestamp = Date.now() / 1000;
-  pair.updateReference(activeId.toNumber(), vParameterClone, sParameters, currentTimestamp);
-  pair.updateVolatilityAccumulator(vParameterClone, sParameters, activeId.toNumber());
-
-  const totalFee = pair.getTotalFee(pair.binStep, sParameters, vParameterClone);
-  return new Decimal(totalFee.toString()).div(new Decimal("1000000")).mul(100);
-}
-
-async function get24hMetrics(connection: Connection, dlmmInstance: DLMM) {
-  try {
-    const [oraclePda] = deriveOracle(dlmmInstance.pubkey, dlmmInstance.program.programId);
-    const oracleAccount = await connection.getAccountInfo(oraclePda);
-    
-    if (!oracleAccount) {
-      throw new Error("Oracle account not found");
-    }
-
-    // Get timestamp 24h ago
-    const currentTimestamp = Math.floor(Date.now() / 1000);
-    const timestamp24hAgo = currentTimestamp - 24 * 60 * 60;
-    
-    // The oracle data starts after the 8-byte discriminator
-    const oracleData = oracleAccount.data.slice(8);
-    
-    // First 24 bytes contain Oracle struct (8 bytes each for idx, active_size, length)
-    const idx = new BN(oracleData.slice(0, 8), 'le').toNumber();
-    const activeSize = new BN(oracleData.slice(8, 16), 'le').toNumber();
-    
-    // Each Observation is 32 bytes (16 for cumulative_active_bin_id, 8 for created_at, 8 for last_updated_at)
-    const OBSERVATION_SIZE = 32;
-    const observationsData = oracleData.slice(24); // Skip Oracle struct
-
-    let volume24h = new BN(0);
-    let fees24h = new BN(0);
-
-    // Process observations within last 24h
-    for (let i = 0; i < activeSize; i++) {
-      const obsIndex = (idx - i + activeSize) % activeSize;
-      const obsStart = obsIndex * OBSERVATION_SIZE;
-      
-      const createdAt = new BN(observationsData.slice(obsStart + 16, obsStart + 24), 'le').toNumber();
-      const lastUpdatedAt = new BN(observationsData.slice(obsStart + 24, obsStart + 32), 'le').toNumber();
-      
-      if (lastUpdatedAt >= timestamp24hAgo && createdAt > 0) {
-        // This observation is within our 24h window and is initialized
-        const cumulativeId = new BN(observationsData.slice(obsStart, obsStart + 16), 'le');
-        
-        // Calculate volume and fees based on cumulative values
-        // Note: This is a simplified calculation - you may need to adjust based on actual oracle data structure
-        volume24h = volume24h.add(cumulativeId.abs());
-      }
-    }
-
-    // Convert to USD using token prices
-    const volumeInUsd = volume24h.toNumber() / Math.pow(10, dlmmInstance.tokenX.decimal);
-    const feesInUsd = volumeInUsd * (dlmmInstance.getDynamicFee().toNumber() / 100); // Estimate fees based on current fee rate
-
-    return {
-      volume24h: volumeInUsd,
-      fees24h: feesInUsd
-    };
-  } catch (error) {
-    console.warn("Failed to fetch 24h metrics:", error);
-    return {
-      volume24h: 0,
-      fees24h: 0
-    };
-  }
+function getDynamicFee(dlmmInstance: DLMM): Decimal {
+  return dlmmInstance.getDynamicFee();
 }
 
 describe("Meteora DLMM TVL Tests", () => {
@@ -134,9 +62,20 @@ describe("Meteora DLMM TVL Tests", () => {
         const reserveYPrice = tokenPrices.solana?.usd || 1;
         
         let poolTVL = (reserveX * reserveXPrice) + (reserveY * reserveYPrice);
-        let dynamicFee = getDynamicFee(pair);
+        let dynamicFee = getDynamicFee(dlmmInstance);
+        const binStep = dlmmInstance.lbPair.binStep / 100; // Convert to percentage
 
-        console.log(`Pool TVL: $${poolTVL.toFixed(2)}, Dynamic Fee: ${dynamicFee.toFixed(2)}%`);
+        // Get 24h metrics
+        const { volume24h, fees24h } = await get24hMetrics(connection, dlmmInstance);
+        
+        console.log(
+          `Pool TVL: $${poolTVL.toFixed(2)}, ` +
+          `Bin Step: ${binStep}%, ` +
+          `Dynamic Fee: ${dynamicFee.toFixed(2)}%, ` +
+          `24h Volume: $${volume24h.toFixed(2)}, ` +
+          `24h Fees: $${fees24h.toFixed(2)}`
+        );
+        
         totalTVL += poolTVL;
       }
 
