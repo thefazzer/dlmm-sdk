@@ -74,10 +74,13 @@ describe("Meteora DLMM TVL Tests", () => {
           const reserveXPrice = tokenPrices.retardio.usd
           const reserveYPrice = tokenPrices.solana.usd
           
-          totalTVL += (reserveX * reserveXPrice) + (reserveY * reserveYPrice);
+          let poolTVL = (reserveX * reserveXPrice) + (reserveY * reserveYPrice);
+          console.log(`Adding TVL ${poolTVL}`);
+
+          totalTVL += poolTVL;
         }
 
-        console.log(`Total TVL for all ${RETARDIOSOLPairs.length} RETARDIO-SOL pools:`, totalTVL);
+        console.log(`Total TVL for RETARDIO-SOL pools:`, totalTVL);
         expect(totalTVL).toBeGreaterThan(0);
 
       } catch (error) {
