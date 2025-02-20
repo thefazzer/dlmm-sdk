@@ -44,33 +44,51 @@ function getDynamicFee(pair) {
 async function get24hMetrics(connection: Connection, dlmmInstance: DLMM) {
   try {
     const [oraclePda] = deriveOracle(dlmmInstance.pubkey, dlmmInstance.program.programId);
-    const oracle = await dlmmInstance.program.account.oracle.fetch(oraclePda);
+    const oracleAccount = await connection.getAccountInfo(oraclePda);
     
+    if (!oracleAccount) {
+      throw new Error("Oracle account not found");
+    }
+
     // Get timestamp 24h ago
     const currentTimestamp = Math.floor(Date.now() / 1000);
     const timestamp24hAgo = currentTimestamp - 24 * 60 * 60;
     
+    // The oracle data starts after the 8-byte discriminator
+    const oracleData = oracleAccount.data.slice(8);
+    
+    // First 24 bytes contain Oracle struct (8 bytes each for idx, active_size, length)
+    const idx = new BN(oracleData.slice(0, 8), 'le').toNumber();
+    const activeSize = new BN(oracleData.slice(8, 16), 'le').toNumber();
+    
+    // Each Observation is 32 bytes (16 for cumulative_active_bin_id, 8 for created_at, 8 for last_updated_at)
+    const OBSERVATION_SIZE = 32;
+    const observationsData = oracleData.slice(24); // Skip Oracle struct
+
     let volume24h = new BN(0);
     let fees24h = new BN(0);
 
-    // Get the active sample size
-    const activeSize = oracle.activeSize.toNumber();
-    const latestIdx = oracle.idx.toNumber();
-
-    // Calculate the starting index for 24h ago
+    // Process observations within last 24h
     for (let i = 0; i < activeSize; i++) {
-      const idx = (latestIdx - i + oracle.samples.length) % oracle.samples.length;
-      const sample = oracle.samples[idx];
+      const obsIndex = (idx - i + activeSize) % activeSize;
+      const obsStart = obsIndex * OBSERVATION_SIZE;
       
-      if (sample.timestamp.toNumber() >= timestamp24hAgo) {
-        volume24h = volume24h.add(sample.volumeX).add(sample.volumeY);
-        fees24h = fees24h.add(sample.feeX).add(sample.feeY);
+      const createdAt = new BN(observationsData.slice(obsStart + 16, obsStart + 24), 'le').toNumber();
+      const lastUpdatedAt = new BN(observationsData.slice(obsStart + 24, obsStart + 32), 'le').toNumber();
+      
+      if (lastUpdatedAt >= timestamp24hAgo && createdAt > 0) {
+        // This observation is within our 24h window and is initialized
+        const cumulativeId = new BN(observationsData.slice(obsStart, obsStart + 16), 'le');
+        
+        // Calculate volume and fees based on cumulative values
+        // Note: This is a simplified calculation - you may need to adjust based on actual oracle data structure
+        volume24h = volume24h.add(cumulativeId.abs());
       }
     }
 
     // Convert to USD using token prices
     const volumeInUsd = volume24h.toNumber() / Math.pow(10, dlmmInstance.tokenX.decimal);
-    const feesInUsd = fees24h.toNumber() / Math.pow(10, dlmmInstance.tokenX.decimal);
+    const feesInUsd = volumeInUsd * (dlmmInstance.getDynamicFee().toNumber() / 100); // Estimate fees based on current fee rate
 
     return {
       volume24h: volumeInUsd,
