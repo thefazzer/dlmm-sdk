@@ -3,6 +3,7 @@ import { DLMM } from "../dlmm/index";
 import { AccountLayout } from "@solana/spl-token";
 import Decimal from "decimal.js";
 import BN from "bn.js";
+import { deriveOracle } from "../dlmm/helpers/derive";
 
 // Meteora DLMM Program ID
 const DLMM_PROGRAM_ID = new PublicKey("LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo");
@@ -27,8 +28,50 @@ async function fetchTokenPrices() {
   }
 }
 
-function getDynamicFee(dlmmInstance: DLMM) {
-  return dlmmInstance.getDynamicFee();
+function getDynamicFee(pair) {
+  let vParameterClone = Object.assign({}, pair.vParameters);
+  let activeId = new BN(pair.activeId);
+  const sParameters = pair.parameters;
+
+  const currentTimestamp = Date.now() / 1000;
+  pair.updateReference(activeId.toNumber(), vParameterClone, sParameters, currentTimestamp);
+  pair.updateVolatilityAccumulator(vParameterClone, sParameters, activeId.toNumber());
+
+  const totalFee = pair.getTotalFee(pair.binStep, sParameters, vParameterClone);
+  return new Decimal(totalFee.toString()).div(new Decimal("1000000")).mul(100);
+}
+
+async function get24hMetrics(connection: Connection, dlmmInstance: DLMM) {
+  try {
+    const [oraclePda] = deriveOracle(dlmmInstance.pubkey, dlmmInstance.program.programId);
+    const oracle = await dlmmInstance.program.account.oracle.fetch(oraclePda);
+    
+    // Get timestamp 24h ago
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+    const timestamp24hAgo = currentTimestamp - 24 * 60 * 60;
+    
+    let volume24h = new BN(0);
+    let fees24h = new BN(0);
+    
+    // Sum up volumes and fees from observations within last 24h
+    for (const observation of oracle.observations) {
+      if (observation.timestamp.toNumber() >= timestamp24hAgo) {
+        volume24h = volume24h.add(observation.volumeX).add(observation.volumeY);
+        fees24h = fees24h.add(observation.feeX).add(observation.feeY);
+      }
+    }
+
+    return {
+      volume24h: volume24h.toNumber() / 1e9, // Convert to standard units
+      fees24h: fees24h.toNumber() / 1e9 // Convert to standard units
+    };
+  } catch (error) {
+    console.warn("Failed to fetch 24h metrics:", error);
+    return {
+      volume24h: 0,
+      fees24h: 0
+    };
+  }
 }
 
 describe("Meteora DLMM TVL Tests", () => {
@@ -63,8 +106,19 @@ describe("Meteora DLMM TVL Tests", () => {
         
         let poolTVL = (reserveX * reserveXPrice) + (reserveY * reserveYPrice);
         let dynamicFee = getDynamicFee(dlmmInstance);
+        const binStep = dlmmInstance.lbPair.binStep / 100; // Convert to percentage
 
-        console.log(`Pool TVL: $${poolTVL.toFixed(2)}, Dynamic Fee: ${dynamicFee.toFixed(2)}%`);
+        // Get 24h metrics
+        const { volume24h, fees24h } = await get24hMetrics(connection, dlmmInstance);
+        
+        console.log(
+          `Pool TVL: $${poolTVL.toFixed(2)}, ` +
+          `Bin Step: ${binStep}%, ` +
+          `Dynamic Fee: ${dynamicFee.toFixed(2)}%, ` +
+          `24h Volume: $${volume24h.toFixed(2)}, ` +
+          `24h Fees: $${fees24h.toFixed(2)}`
+        );
+        
         totalTVL += poolTVL;
       }
 
