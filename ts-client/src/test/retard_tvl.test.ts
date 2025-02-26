@@ -14,6 +14,7 @@ const HAWK_MINT = new PublicKey("HAWKThXRcNL9ZGZKqgUXLm4W8tnRZ7U6MVdEepSutj34");
 const RETARDIO_MINT = new PublicKey("6ogzHhzdrQr9Pgv6hZ2MNze7UrzBMAFyBBWUYp1Fhitx");
 const SOL_MINT = new PublicKey("So11111111111111111111111111111111111111112");
 const TRUMP_MINT = new PublicKey("6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPN");
+const HAWH_MINT = new PublicKey("HAWHmcTUh5M5hLJwjEVKvnwUxSY5cBdyVcuMQ6GqiefP");
 
 const RPC_PROVIDERS = [
   "https://rpc.ankr.com/solana",
@@ -27,12 +28,12 @@ function getNextRpc() {
   return RPC_PROVIDERS[currentRpcIndex];
 }
 
-//const connection = new Connection(getNextRpc(), { commitment: "confirmed" });
+const connection = new Connection(getNextRpc(), { commitment: "confirmed" });
 
 // Alternative RPC provider to avoid Alchemy restrictions
- const connection = new Connection("https://rpc.helius.xyz/?api-key=1c510177-8d47-41f2-9053-d3a30f3f81cf", {
- commitment: "confirmed",
-});
+// const connection = new Connection("https://rpc.helius.xyz/?api-key=1c510177-8d47-41f2-9053-d3a30f3f81cf", {
+// commitment: "confirmed",
+//});
 
 async function fetchTokenPrices() {
   try {
@@ -162,7 +163,7 @@ async function fetchWithRetry<T>(
   throw new Error("Failed after multiple retries.");
 }
 
-/* describe("Meteora DLMM TVL Tests", () => {
+describe("Meteora DLMM TVL Tests", () => {
   it("Should fetch all liquidity pools and check RETARDIO-SOL TVL", async () => {
     try {
       console.time("Fetching Liquidity Pairs");
@@ -237,7 +238,7 @@ async function fetchWithRetry<T>(
     }
   });
 });
- */
+
 describe("Meteora DLMM Basic Pool Count Test", () => {
   it("Should fetch all liquidity pools and verify there are over 1000", async () => {
     try {
@@ -256,7 +257,60 @@ describe("Meteora DLMM Basic Pool Count Test", () => {
   });
 });
 
+describe("Meteora DLMM RETARDIO-SOL Pair Count Test", () => {
+  it("Should verify there are between 10 and 100 RETARDIO-SOL pairs", async () => {
+    try {
+      console.time("Fetching Liquidity Pairs");
+      const allPairs = await DLMM.getLbPairs(connection, { programId: DLMM_PROGRAM_ID });
+      console.timeEnd("Fetching Liquidity Pairs");
+
+      console.log("Total Liquidity Pairs Found:", allPairs.length);
+      
+      const RETARDIOSOLPairs = allPairs.filter(pair =>
+        (pair.account.tokenXMint.equals(RETARDIO_MINT) && pair.account.tokenYMint.equals(SOL_MINT)) ||
+        (pair.account.tokenXMint.equals(SOL_MINT) && pair.account.tokenYMint.equals(RETARDIO_MINT))
+      );
+
+      console.log("RETARDIO-SOL Pairs Found:", RETARDIOSOLPairs.length);
+      
+      // Assert that there are between 10 and 100 RETARDIO-SOL pairs
+      expect(RETARDIOSOLPairs.length).toBeGreaterThan(10);
+      expect(RETARDIOSOLPairs.length).toBeLessThan(100);
+    } catch (error) {
+      console.error("Error fetching RETARDIO-SOL pairs:", error);
+      throw error;
+    }
+  });
+});
+
+describe("Meteora DLMM HAWH-SOL Pair Count Test", () => {
+  it("Should verify there are between 10 and 100 HAWH-SOL pairs", async () => {
+    try {
+      console.time("Fetching Liquidity Pairs");
+      const allPairs = await DLMM.getLbPairs(connection, { programId: DLMM_PROGRAM_ID });
+      console.timeEnd("Fetching Liquidity Pairs");
+
+      console.log("Total Liquidity Pairs Found:", allPairs.length);
+      
+      const HAWHSOLPairs = allPairs.filter(pair =>
+        (pair.account.tokenXMint.equals(HAWH_MINT) && pair.account.tokenYMint.equals(SOL_MINT)) ||
+        (pair.account.tokenXMint.equals(SOL_MINT) && pair.account.tokenYMint.equals(HAWH_MINT))
+      );
+
+      console.log("HAWH-SOL Pairs Found:", HAWHSOLPairs.length);
+      
+      // Assert that there are between 10 and 100 HAWH-SOL pairs
+      expect(HAWHSOLPairs.length).toBeGreaterThan(10);
+      expect(HAWHSOLPairs.length).toBeLessThan(100);
+    } catch (error) {
+      console.error("Error fetching HAWH-SOL pairs:", error);
+      throw error;
+    }
+  });
+});
+
 afterAll(async () => {
   console.log("✅ Closing Solana connection...");
+  await connection.requestAirdrop(new PublicKey("So11111111111111111111111111111111111111112"), 1); // Dummy request to keep connection alive
   await new Promise((resolve) => setTimeout(resolve, 1000));
 });
