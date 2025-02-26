@@ -15,8 +15,19 @@ const RETARDIO_MINT = new PublicKey("6ogzHhzdrQr9Pgv6hZ2MNze7UrzBMAFyBBWUYp1Fhit
 const SOL_MINT = new PublicKey("So11111111111111111111111111111111111111112");
 const TRUMP_MINT = new PublicKey("6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPN");
 
+const RPC_PROVIDERS = [
+  "https://rpc.ankr.com/solana",
+  //"https://solana.getblock.io/mainnet/?api_key=YOUR_API_KEY",
+  "https://ssc-dao.genesysgo.net/"
+];
 
-const connection = new Connection("https://ssc-dao.genesysgo.net/", { commitment: "confirmed" });
+let currentRpcIndex = 0;
+function getNextRpc() {
+  currentRpcIndex = (currentRpcIndex + 1) % RPC_PROVIDERS.length;
+  return RPC_PROVIDERS[currentRpcIndex];
+}
+
+const connection = new Connection(getNextRpc(), { commitment: "confirmed" });
 
 // Alternative RPC provider to avoid Alchemy restrictions
 // const connection = new Connection("https://rpc.helius.xyz/?api-key=1c510177-8d47-41f2-9053-d3a30f3f81cf", {
@@ -228,6 +239,7 @@ describe("Meteora DLMM TVL Tests", () => {
 });
 
 afterAll(async () => {
-  console.log("✅ Cleaning up Solana connection...");
-  global.gc?.(); // Force garbage collection if supported
+  console.log("✅ Closing Solana connection...");
+  await connection.requestAirdrop(new PublicKey("So11111111111111111111111111111111111111112"), 1); // Dummy request to keep connection alive
+  await new Promise((resolve) => setTimeout(resolve, 1000));
 });
