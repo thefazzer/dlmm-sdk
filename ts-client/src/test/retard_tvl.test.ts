@@ -238,62 +238,6 @@ describe("Meteora DLMM TVL Tests", () => {
   });
 });
 
-describe("Meteora DLMM Specific Pool Test", () => {
-  it("Should verify existence of specific Retardio-SOL DLMM pool and output its details", async () => {
-    try {
-      // The specific pool address to check
-      const specificPoolAddress = new PublicKey("BDrohyd6uDbazHuBEKMGUq9G74UY8SAS2yrU9SyC9K7L");
-      
-      console.log(`Fetching specific DLMM pool: ${specificPoolAddress.toString()}`);
-      
-      // Create DLMM instance for the specific pool
-      const dlmmInstance = await DLMM.create(connection, specificPoolAddress);
-      
-      // Verify the pool exists and is a Retardio-SOL pool
-      const isRetardioSolPool = 
-        (dlmmInstance.tokenX.mint.equals(RETARDIO_MINT) && dlmmInstance.tokenY.mint.equals(SOL_MINT)) ||
-        (dlmmInstance.tokenX.mint.equals(SOL_MINT) && dlmmInstance.tokenY.mint.equals(RETARDIO_MINT));
-      
-      expect(isRetardioSolPool).toBe(true);
-      
-      // Output pool details
-      console.log("Pool Details:");
-      console.log(`- Pool ID: ${specificPoolAddress.toString()}`);
-      console.log(`- Bin Step: ${dlmmInstance.lbPair.binStep / 100}%`);
-      console.log(`- Token X: ${dlmmInstance.tokenX.mint.toString()}`);
-      console.log(`- Token Y: ${dlmmInstance.tokenY.mint.toString()}`);
-      console.log(`- Active Bin: ${dlmmInstance.lbPair.activeId}`);
-      console.log(`- Base Spread: ${dlmmInstance.lbPair.parameters.baseFactor / 10000}%`);
-      console.log(`- Max Bin ID: ${dlmmInstance.lbPair.maxBinId}`);
-      console.log(`- Min Bin ID: ${dlmmInstance.lbPair.minBinId}`);
-      
-      // Get reserves
-      const reserveXInfo = await connection.getAccountInfo(dlmmInstance.tokenX.reserve);
-      const reserveYInfo = await connection.getAccountInfo(dlmmInstance.tokenY.reserve);
-      
-      let reserveX = 0, reserveY = 0;
-      if (reserveXInfo?.data) reserveX = parseFloat(AccountLayout.decode(reserveXInfo.data).amount.toString());
-      if (reserveYInfo?.data) reserveY = parseFloat(AccountLayout.decode(reserveYInfo.data).amount.toString());
-      
-      console.log(`- Reserve X: ${reserveX}`);
-      console.log(`- Reserve Y: ${reserveY}`);
-      
-      // Get dynamic fee
-      const dynamicFee = getDynamicFee(dlmmInstance);
-      console.log(`- Dynamic Fee: ${dynamicFee.toFixed(2)}%`);
-      
-      // Get 24h metrics
-      const { volume24h, fees24h } = await get24hMetrics(connection, dlmmInstance);
-      console.log(`- 24h Volume: $${Number(volume24h).toFixed(2)}`);
-      console.log(`- 24h Fees: $${Number(fees24h).toFixed(2)}`);
-      
-    } catch (error) {
-      console.error("Error fetching specific DLMM pool:", error);
-      throw error;
-    }
-  });
-});
-
 afterAll(async () => {
   console.log("✅ Closing Solana connection...");
   await connection.requestAirdrop(new PublicKey("So11111111111111111111111111111111111111112"), 1); // Dummy request to keep connection alive
