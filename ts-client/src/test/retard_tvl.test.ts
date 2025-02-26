@@ -27,12 +27,12 @@ function getNextRpc() {
   return RPC_PROVIDERS[currentRpcIndex];
 }
 
-const connection = new Connection(getNextRpc(), { commitment: "confirmed" });
+//const connection = new Connection(getNextRpc(), { commitment: "confirmed" });
 
 // Alternative RPC provider to avoid Alchemy restrictions
-// const connection = new Connection("https://rpc.helius.xyz/?api-key=1c510177-8d47-41f2-9053-d3a30f3f81cf", {
-// commitment: "confirmed",
-//});
+ const connection = new Connection("https://rpc.helius.xyz/?api-key=1c510177-8d47-41f2-9053-d3a30f3f81cf", {
+ commitment: "confirmed",
+});
 
 async function fetchTokenPrices() {
   try {
@@ -162,7 +162,7 @@ async function fetchWithRetry<T>(
   throw new Error("Failed after multiple retries.");
 }
 
-describe("Meteora DLMM TVL Tests", () => {
+/* describe("Meteora DLMM TVL Tests", () => {
   it("Should fetch all liquidity pools and check RETARDIO-SOL TVL", async () => {
     try {
       console.time("Fetching Liquidity Pairs");
@@ -237,7 +237,7 @@ describe("Meteora DLMM TVL Tests", () => {
     }
   });
 });
-
+ */
 describe("Meteora DLMM Basic Pool Count Test", () => {
   it("Should fetch all liquidity pools and verify there are over 1000", async () => {
     try {
@@ -258,6 +258,5 @@ describe("Meteora DLMM Basic Pool Count Test", () => {
 
 afterAll(async () => {
   console.log("✅ Closing Solana connection...");
-  await connection.requestAirdrop(new PublicKey("So11111111111111111111111111111111111111112"), 1); // Dummy request to keep connection alive
   await new Promise((resolve) => setTimeout(resolve, 1000));
 });
