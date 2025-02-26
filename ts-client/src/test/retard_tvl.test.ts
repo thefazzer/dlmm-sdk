@@ -238,6 +238,24 @@ describe("Meteora DLMM TVL Tests", () => {
   });
 });
 
+describe("Meteora DLMM Basic Pool Count Test", () => {
+  it("Should fetch all liquidity pools and verify there are over 1000", async () => {
+    try {
+      console.time("Fetching Liquidity Pairs");
+      const allPairs = await DLMM.getLbPairs(connection, { programId: DLMM_PROGRAM_ID });
+      console.timeEnd("Fetching Liquidity Pairs");
+
+      console.log("Total Liquidity Pairs Found:", allPairs.length);
+      
+      // Assert that there are over 1000 liquidity pools
+      expect(allPairs.length).toBeGreaterThan(1000);
+    } catch (error) {
+      console.error("Error fetching liquidity pairs:", error);
+      throw error;
+    }
+  });
+});
+
 afterAll(async () => {
   console.log("✅ Closing Solana connection...");
   await connection.requestAirdrop(new PublicKey("So11111111111111111111111111111111111111112"), 1); // Dummy request to keep connection alive
