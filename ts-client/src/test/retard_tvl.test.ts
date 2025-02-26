@@ -14,6 +14,7 @@ const HAWK_MINT = new PublicKey("HAWKThXRcNL9ZGZKqgUXLm4W8tnRZ7U6MVdEepSutj34");
 const RETARDIO_MINT = new PublicKey("6ogzHhzdrQr9Pgv6hZ2MNze7UrzBMAFyBBWUYp1Fhitx");
 const SOL_MINT = new PublicKey("So11111111111111111111111111111111111111112");
 const TRUMP_MINT = new PublicKey("6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPN");
+const HAWH_MINT = new PublicKey("HAWHmcTUh5M5hLJwjEVKvnwUxSY5cBdyVcuMQ6GqiefP"); // Add the HAWH mint address constant
 
 const RPC_PROVIDERS = [
   "https://rpc.ankr.com/solana",
@@ -238,8 +239,8 @@ describe("Meteora DLMM TVL Tests", () => {
   });
 });
 
-describe("Meteora DLMM Basic Pool Count Test", () => {
-  it("Should fetch all liquidity pools and verify there are over 1000", async () => {
+describe("Meteora DLMM RETARDIO-SOL Pair Count Test", () => {
+  it("Should verify there are between 10 and 100 RETARDIO-SOL pairs", async () => {
     try {
       console.time("Fetching Liquidity Pairs");
       const allPairs = await DLMM.getLbPairs(connection, { programId: DLMM_PROGRAM_ID });
@@ -247,10 +248,44 @@ describe("Meteora DLMM Basic Pool Count Test", () => {
 
       console.log("Total Liquidity Pairs Found:", allPairs.length);
       
-      // Assert that there are over 1000 liquidity pools
-      expect(allPairs.length).toBeGreaterThan(1000);
+      const RETARDIOSOLPairs = allPairs.filter(pair =>
+        (pair.account.tokenXMint.equals(RETARDIO_MINT) && pair.account.tokenYMint.equals(SOL_MINT)) ||
+        (pair.account.tokenXMint.equals(SOL_MINT) && pair.account.tokenYMint.equals(RETARDIO_MINT))
+      );
+
+      console.log("RETARDIO-SOL Pairs Found:", RETARDIOSOLPairs.length);
+      
+      // Assert that there are between 10 and 100 RETARDIO-SOL pairs
+      expect(RETARDIOSOLPairs.length).toBeGreaterThan(10);
+      expect(RETARDIOSOLPairs.length).toBeLessThan(100);
     } catch (error) {
-      console.error("Error fetching liquidity pairs:", error);
+      console.error("Error fetching RETARDIO-SOL pairs:", error);
+      throw error;
+    }
+  });
+});
+
+describe("Meteora DLMM HAWH-SOL Pair Count Test", () => {
+  it("Should verify there are between 10 and 100 HAWH-SOL pairs", async () => {
+    try {
+      console.time("Fetching Liquidity Pairs");
+      const allPairs = await DLMM.getLbPairs(connection, { programId: DLMM_PROGRAM_ID });
+      console.timeEnd("Fetching Liquidity Pairs");
+
+      console.log("Total Liquidity Pairs Found:", allPairs.length);
+      
+      const HAWHSOLPairs = allPairs.filter(pair =>
+        (pair.account.tokenXMint.equals(HAWH_MINT) && pair.account.tokenYMint.equals(SOL_MINT)) ||
+        (pair.account.tokenXMint.equals(SOL_MINT) && pair.account.tokenYMint.equals(HAWH_MINT))
+      );
+
+      console.log("HAWH-SOL Pairs Found:", HAWHSOLPairs.length);
+      
+      // Assert that there are between 10 and 100 HAWH-SOL pairs
+      expect(HAWHSOLPairs.length).toBeGreaterThan(10);
+      expect(HAWHSOLPairs.length).toBeLessThan(100);
+    } catch (error) {
+      console.error("Error fetching HAWH-SOL pairs:", error);
       throw error;
     }
   });
