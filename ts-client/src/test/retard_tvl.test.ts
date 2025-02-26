@@ -251,8 +251,8 @@ describe("Meteora DLMM Specific Pool Test", () => {
       
       // Verify the pool exists and is a Retardio-SOL pool
       const isRetardioSolPool = 
-        (dlmmInstance.tokenX.mint.equals(RETARDIO_MINT) && dlmmInstance.tokenY.mint.equals(SOL_MINT)) ||
-        (dlmmInstance.tokenX.mint.equals(SOL_MINT) && dlmmInstance.tokenY.mint.equals(RETARDIO_MINT));
+        (dlmmInstance.tokenX.publicKey.equals(RETARDIO_MINT) && dlmmInstance.tokenY.publicKey.equals(SOL_MINT)) ||
+        (dlmmInstance.tokenX.publicKey.equals(SOL_MINT) && dlmmInstance.tokenY.publicKey.equals(RETARDIO_MINT));
       
       expect(isRetardioSolPool).toBe(true);
       
@@ -260,12 +260,8 @@ describe("Meteora DLMM Specific Pool Test", () => {
       console.log("Pool Details:");
       console.log(`- Pool ID: ${specificPoolAddress.toString()}`);
       console.log(`- Bin Step: ${dlmmInstance.lbPair.binStep / 100}%`);
-      console.log(`- Token X: ${dlmmInstance.tokenX.mint.toString()}`);
-      console.log(`- Token Y: ${dlmmInstance.tokenY.mint.toString()}`);
       console.log(`- Active Bin: ${dlmmInstance.lbPair.activeId}`);
       console.log(`- Base Spread: ${dlmmInstance.lbPair.parameters.baseFactor / 10000}%`);
-      console.log(`- Max Bin ID: ${dlmmInstance.lbPair.maxBinId}`);
-      console.log(`- Min Bin ID: ${dlmmInstance.lbPair.minBinId}`);
       
       // Get reserves
       const reserveXInfo = await connection.getAccountInfo(dlmmInstance.tokenX.reserve);
