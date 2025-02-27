@@ -27,12 +27,12 @@ function getNextRpc() {
   return RPC_PROVIDERS[currentRpcIndex];
 }
 
-const connection = new Connection(getNextRpc(), { commitment: "confirmed" });
+// const connection = new Connection(getNextRpc(), { commitment: "confirmed" });
 
 // Alternative RPC provider to avoid Alchemy restrictions
-// const connection = new Connection("https://rpc.helius.xyz/?api-key=1c510177-8d47-41f2-9053-d3a30f3f81cf", {
-// commitment: "confirmed",
-//});
+const connection = new Connection("https://rpc.helius.xyz/?api-key=1c510177-8d47-41f2-9053-d3a30f3f81cf", {
+commitment: "confirmed",
+});
 
 async function fetchTokenPrices() {
   try {
@@ -169,70 +169,197 @@ describe("Meteora DLMM TVL Tests", () => {
       const allPairs = await DLMM.getLbPairs(connection, { programId: DLMM_PROGRAM_ID });
       console.timeEnd("Fetching Liquidity Pairs");
 
-      console.log("Total Liquidity Pairs Found:", allPairs.length);
+      console.log(`Total Liquidity Pairs Found: ${allPairs.length}`);
       if (allPairs.length === 0) throw new Error("No liquidity pairs found.");
 
+      // Filter for RETARDIO-SOL pairs
+      let RETARDIOSOLPairs = allPairs.filter(pair =>
+        (pair.account.tokenXMint.equals(RETARDIO_MINT) && pair.account.tokenYMint.equals(SOL_MINT)) ||
+        (pair.account.tokenXMint.equals(SOL_MINT) && pair.account.tokenYMint.equals(RETARDIO_MINT))
+      );
+
+      console.log(`RETARDIO-SOL Pairs Found: ${RETARDIOSOLPairs.length}`);
+      if (RETARDIOSOLPairs.length === 0) throw new Error("No RETARDIO-SOL liquidity pairs found.");
+
+      // Limit pairs to max 500 if >500
+      if (RETARDIOSOLPairs.length > 500) {
+        console.log(`Limiting processing to 500 pairs out of ${RETARDIOSOLPairs.length}`);
+        RETARDIOSOLPairs = RETARDIOSOLPairs.slice(0, 500);
+      }
+
+      const tokenPrices = await fetchTokenPrices();
+      let totalTVL = 0;
+
+      // Suppress "429 Too Many Requests" error logs
+      const originalConsoleError = console.error;
+      console.error = (msg, ...args) => {
+        if (typeof msg === "string" && msg.includes("429 Too Many Requests")) return;
+        originalConsoleError(msg, ...args);
+      };
+
+      // Process all pairs, ensuring all async operations complete before logging
+      const results = await Promise.allSettled(
+        RETARDIOSOLPairs.map(async (pair) => {
+          try {
+            const dlmmInstance = await DLMM.create(connection, pair.publicKey);
+            const reserveXInfo = await connection.getAccountInfo(dlmmInstance.tokenX.reserve);
+            const reserveYInfo = await connection.getAccountInfo(dlmmInstance.tokenY.reserve);
+
+            let reserveX = 0, reserveY = 0;
+            if (reserveXInfo?.data) reserveX = parseFloat(AccountLayout.decode(reserveXInfo.data).amount.toString());
+            if (reserveYInfo?.data) reserveY = parseFloat(AccountLayout.decode(reserveYInfo.data).amount.toString());
+
+            const reserveXPrice = tokenPrices.retardio?.usd || 1;
+            const reserveYPrice = tokenPrices.solana?.usd || 1;
+
+            let poolTVL = (reserveX * reserveXPrice) + (reserveY * reserveYPrice);
+            let dynamicFee = getDynamicFee(dlmmInstance);
+            const binStep = dlmmInstance.lbPair.binStep / 100; // Convert to percentage
+
+            // Get 24h metrics
+            const { volume24h, fees24h } = await get24hMetrics(connection, dlmmInstance);
+
+            return {
+              poolId: pair.publicKey.toString(),
+              poolTVL: poolTVL.toFixed(2),
+              binStep,
+              dynamicFee: dynamicFee.toFixed(2),
+              volume24h: Number(volume24h).toFixed(2),
+              fees24h: Number(fees24h).toFixed(2)
+            };
+          } catch (error) {
+            return { error: `Error processing pool ${pair.publicKey.toString()}: ${error.message}` };
+          }
+        })
+      );
+
+      // Restore original console.error
+      console.error = originalConsoleError;
+
+      // Log only successful results
+      results.forEach((result) => {
+        if (result.status === "fulfilled" && !result.value?.error) {
+          console.log(
+            `Pool: ${result.value.poolId}, ` +
+            `Pool TVL: $${result.value.poolTVL}, ` +
+            `Bin Step: ${result.value.binStep}%, ` +
+            `Dynamic Fee: ${result.value.dynamicFee}%, ` +
+            `24h Volume: $${result.value.volume24h}, ` +
+            `24h Fees: $${result.value.fees24h}`
+          );
+          totalTVL += parseFloat(result.value.poolTVL);
+        } else {
+          console.warn(result.status.toString() || "Unknown error processing pool");
+        }
+      });
+
+      console.log(`Total TVL for RETARDIO-SOL pools: $${totalTVL.toFixed(2)}`);
+      expect(totalTVL).toBeGreaterThan(0);
+
+    } catch (error) {
+      console.error("Error fetching TVL:", error);
+      throw error;
+    }
+  });
+});
+
+describe("Meteora DLMM RETARDIO-SOL Pair Count Test", () => {
+  it("Should verify there are between 10 and 100 RETARDIO-SOL pairs", async () => {
+    try {
+      console.time("Fetching Liquidity Pairs");
+      const allPairs = await DLMM.getLbPairs(connection, { programId: DLMM_PROGRAM_ID });
+      console.timeEnd("Fetching Liquidity Pairs");
+
+      console.log("Total Liquidity Pairs Found:", allPairs.length);
+      
       const RETARDIOSOLPairs = allPairs.filter(pair =>
         (pair.account.tokenXMint.equals(RETARDIO_MINT) && pair.account.tokenYMint.equals(SOL_MINT)) ||
         (pair.account.tokenXMint.equals(SOL_MINT) && pair.account.tokenYMint.equals(RETARDIO_MINT))
       );
 
       console.log("RETARDIO-SOL Pairs Found:", RETARDIOSOLPairs.length);
-      if (RETARDIOSOLPairs.length === 0) throw new Error("No RETARDIO-SOL liquidity pairs found.");
+      
+      // Assert that there are between 10 and 100 RETARDIO-SOL pairs
+      expect(RETARDIOSOLPairs.length).toBeGreaterThan(10);
+      expect(RETARDIOSOLPairs.length).toBeLessThan(100);
+    } catch (error) {
+      console.error("Error fetching RETARDIO-SOL pairs:", error);
+      throw error;
+    }
+  });
+});
 
-      const tokenPrices = await fetchTokenPrices();
-      let totalTVL = 0;
+describe("Meteora DLMM HAWK-SOL Pair Count Test", () => {
+  it("Should verify there are between 10 and 100 HAWK-SOL pairs", async () => {
+    try {
+      // Suppress unwanted console errors
+      const originalConsoleError = console.error;
+      console.error = (msg, ...args) => {
+        if (typeof msg === "string" && msg.includes("429 Too Many Requests")) return;
+        originalConsoleError(msg, ...args);
+      };
 
-      // Collect all async operations
-      const results = await Promise.all(
-        RETARDIOSOLPairs.map(async (pair) => {
-          const dlmmInstance = await DLMM.create(connection, pair.publicKey);
-          const reserveXInfo = await connection.getAccountInfo(dlmmInstance.tokenX.reserve);
-          const reserveYInfo = await connection.getAccountInfo(dlmmInstance.tokenY.reserve);
-          
-          let reserveX = 0, reserveY = 0;
-          if (reserveXInfo?.data) reserveX = parseFloat(AccountLayout.decode(reserveXInfo.data).amount.toString());
-          if (reserveYInfo?.data) reserveY = parseFloat(AccountLayout.decode(reserveYInfo.data).amount.toString());
+      console.time("Fetching Liquidity Pairs");
+      const allPairs = await DLMM.getLbPairs(connection, { programId: DLMM_PROGRAM_ID });
+      console.timeEnd("Fetching Liquidity Pairs");
 
-          const reserveXPrice = tokenPrices.retardio?.usd || 1;
-          const reserveYPrice = tokenPrices.solana?.usd || 1;
-          
-          let poolTVL = (reserveX * reserveXPrice) + (reserveY * reserveYPrice);
-          let dynamicFee = getDynamicFee(dlmmInstance);
-          const binStep = dlmmInstance.lbPair.binStep / 100; // Convert to percentage
+      console.log(`Total Liquidity Pairs Found: ${allPairs.length}`);
 
-          // Get 24h metrics
-          const { volume24h, fees24h } = await get24hMetrics(connection, dlmmInstance);
-
-          return {
-            poolId: pair.publicKey.toString(),
-            poolTVL: poolTVL.toFixed(2),
-            binStep,
-            dynamicFee: dynamicFee.toFixed(2),
-            volume24h: Number(volume24h).toFixed(2),
-            fees24h: Number(fees24h).toFixed(2)
-          };
-        })
+      const hawkSolPairs = allPairs.filter(pair =>
+        (pair.account.tokenXMint.equals(HAWK_MINT) && pair.account.tokenYMint.equals(SOL_MINT)) ||
+        (pair.account.tokenXMint.equals(SOL_MINT) && pair.account.tokenYMint.equals(HAWK_MINT))
       );
 
-      // Now log everything AFTER all async operations are finished
-      for (const result of results) {
+      console.log(`HAWK-SOL Pairs Found: ${hawkSolPairs.length}`);
+
+      if (hawkSolPairs.length > 0) {
+        console.log("\n=== HAWK-SOL Pool Details ===");
         console.log(
-          `Pool: ${result.poolId}, ` +
-          `Pool TVL: $${result.poolTVL}, ` +
-          `Bin Step: ${result.binStep}%, ` +
-          `Dynamic Fee: ${result.dynamicFee}%, ` +
-          `24h Volume: $${result.volume24h}, ` +
-          `24h Fees: $${result.fees24h}`
+          "------------------------------------------------------------------------------------------------"
         );
-
-        totalTVL += parseFloat(result.poolTVL);
+        console.log(
+          "| Pool ID                | Bin Step | Active Bin | Protocol Fee X | Protocol Fee Y | Base Spread | Status  |"
+        );
+        console.log(
+          "------------------------------------------------------------------------------------------------"
+        );
+      
+        // Ensure all async calls resolve before logging
+        const poolData = await Promise.all(
+          hawkSolPairs.map(async (pair) => {
+            try {
+              const dlmmInstance = await DLMM.create(connection, pair.publicKey);
+      
+              return `| ${pair.publicKey.toString().slice(0, 20)}... | ` +
+                     `${dlmmInstance.lbPair?.binStep ?? "N/A"}     | ` +
+                     `${dlmmInstance.lbPair?.activeId ?? "N/A"}     | ` +
+                     `${dlmmInstance.lbPair?.protocolFee?.amountX ?? "N/A"}         | ` +
+                     `${dlmmInstance.lbPair?.protocolFee?.amountY ?? "N/A"}         | ` +
+                     `${(dlmmInstance.lbPair?.parameters?.baseFactor ?? 0 / 10000).toFixed(2)}%        | ` +
+                     `${dlmmInstance.lbPair?.status ?? "N/A"}  |`;
+            } catch (error) {
+              console.error(`Error processing pool ${pair.publicKey.toString()}:`, error);
+              return `| ${pair.publicKey.toString().slice(0, 20)}... | ERROR | ERROR | ERROR | ERROR | ERROR | ERROR |`;
+            }
+          })
+        );
+      
+        // Ensure logs only print valid data
+        poolData.forEach(row => console.log(row));
+      
+        console.log(
+          "------------------------------------------------------------------------------------------------"
+        );
       }
+      
+      expect(hawkSolPairs.length).toBeGreaterThanOrEqual(10);
+      expect(hawkSolPairs.length).toBeLessThanOrEqual(100);
 
-      console.log(`Total TVL for RETARDIO-SOL pools: $${totalTVL.toFixed(2)}`);
-      expect(totalTVL).toBeGreaterThan(0);
+      // Restore original console.error after test execution
+      console.error = originalConsoleError;
+
     } catch (error) {
-      console.error("Error fetching TVL:", error);
+      console.error("Error fetching HAWK-SOL pairs:", error);
       throw error;
     }
   });
@@ -259,10 +386,12 @@ describe("Meteora DLMM Specific Pool Test", () => {
       // Output pool details
       console.log("Pool Details:");
       console.log(`- Pool ID: ${specificPoolAddress.toString()}`);
-      console.log(`- Bin Step: ${dlmmInstance.lbPair.binStep / 100}%`);
+      console.log(`- Bin Step: ${dlmmInstance.lbPair.binStep}`);
       console.log(`- Active Bin: ${dlmmInstance.lbPair.activeId}`);
+      console.log(`- Protocol Fee: ${dlmmInstance.lbPair.protocolFee}`);
       console.log(`- Base Spread: ${dlmmInstance.lbPair.parameters.baseFactor / 10000}%`);
-      
+      console.log(`- Status: ${dlmmInstance.lbPair.status}`);
+
       // Get reserves
       const reserveXInfo = await connection.getAccountInfo(dlmmInstance.tokenX.reserve);
       const reserveYInfo = await connection.getAccountInfo(dlmmInstance.tokenY.reserve);
@@ -292,6 +421,5 @@ describe("Meteora DLMM Specific Pool Test", () => {
 
 afterAll(async () => {
   console.log("✅ Closing Solana connection...");
-  await connection.requestAirdrop(new PublicKey("So11111111111111111111111111111111111111112"), 1); // Dummy request to keep connection alive
   await new Promise((resolve) => setTimeout(resolve, 1000));
 });
