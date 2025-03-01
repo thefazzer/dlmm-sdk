@@ -1,5 +1,3 @@
-// ... existing code ...
-
 // Add this helper function at the top level of your file
 function safelyCloseConnection(connection: Connection): void {
   try {
@@ -32,14 +30,10 @@ function safelyCloseConnection(connection: Connection): void {
   }
 }
 
-// ... existing code ...
-
-// Then in your processBatch function, replace the connection cleanup code:
+// In the processBatch function, replace the connection cleanup code:
 finally {
   // Clean up connection resources
   safelyCloseConnection(connection);
   console.log(`Completed batch ${batchIndex}`);
   emitter.completeBatch();
 }
-
-// ... existing code ...
