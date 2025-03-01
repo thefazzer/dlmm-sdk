@@ -1,10 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import { Connection, PublicKey } from '@solana/web3.js';
-import { DLMM } from './dlmm';
-import { PoolEventEmitter } from './utils/eventEmitter';
-import { processBatch } from './utils/batchProcessor';
-import { BatchProcessingOptions } from './types/poolTypes';
+import { DLMM } from '../dlmm';
+import { PoolEventEmitter } from '../../../src/utils/eventEmitter';
+import { processBatch } from './batchProcessor';
+import { BatchProcessingOptions } from '../../../src/types/poolTypes';
 
 const app = express();
 app.use(cors());
@@ -120,7 +120,7 @@ app.get('/get_test_pools', async (req, res) => {
 // Helper function to fetch pool addresses
 async function fetchPoolAddresses(connection: Connection, cluster: string): Promise<PublicKey[]> {
     try {
-        const allPoolAddresses = await DLMM.getLbPairs(connection, { cluster });
+        const allPoolAddresses = await DLMM.getLbPairs(connection, {});
         return allPoolAddresses.map(pair => pair.publicKey);
     } catch (error) {
         console.error("Error fetching pools:", error);

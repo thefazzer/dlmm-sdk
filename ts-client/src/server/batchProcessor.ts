@@ -1,8 +1,8 @@
 import { PublicKey } from '@solana/web3.js';
 import { DLMM } from '../dlmm';
-import { PoolInfo, BatchProcessingOptions, DEFAULT_BATCH_OPTIONS } from '../types/poolTypes';
-import { PoolEventEmitter, createBarrier } from './eventEmitter';
-import { createConnection, safelyCloseConnection, withRetry } from './connectionManager';
+import { PoolInfo, BatchProcessingOptions, DEFAULT_BATCH_OPTIONS } from '../../../src/types/poolTypes';
+import { PoolEventEmitter, createBarrier } from '../../../src/utils/eventEmitter';
+import { createConnection, safelyCloseConnection, withRetry } from '../../../src/utils/connectionManager';
 
 /**
  * Processes a batch of DLMM pools
@@ -35,7 +35,7 @@ export async function processBatch(
         try {
           // Use retry logic for creating DLMM instance
           const dlmm = await withRetry(
-            () => DLMM.create(connection, poolAddress, { cluster: options.cluster }),
+            () => DLMM.create(connection, poolAddress, {  }),
             options.maxRetries,
             options.retryDelayMs
           );
@@ -139,7 +139,7 @@ export async function fetchPools(
   
   try {
     const allPoolAddresses = await withRetry(
-      () => DLMM.getLbPairs(connection, { cluster: mergedOptions.cluster }),
+      () => DLMM.getLbPairs(connection, { }),
       mergedOptions.maxRetries,
       mergedOptions.retryDelayMs
     );
@@ -208,7 +208,7 @@ export async function fetchPoolsStreaming(
   
   try {
     const allPoolAddresses = await withRetry(
-      () => DLMM.getLbPairs(connection, { cluster: mergedOptions.cluster }),
+      () => DLMM.getLbPairs(connection, {  }),
       mergedOptions.maxRetries,
       mergedOptions.retryDelayMs
     );

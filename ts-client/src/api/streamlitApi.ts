@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
-import { fetchPools, fetchPoolsStreaming } from '../utils/batchProcessor';
-import { PoolInfo, BatchProcessingOptions } from '../types/poolTypes';
+import { fetchPools, fetchPoolsStreaming } from '../server/batchProcessor';
+import { PoolInfo, BatchProcessingOptions } from '../../../src/types/poolTypes';
 import WebSocket from 'ws';
 
 const app = express();
