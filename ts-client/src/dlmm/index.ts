@@ -4835,9 +4835,14 @@ export class DLMM {
         if (bins.every(({ amountX }) => amountX.isZero())) {
           count--;
         } else {
-          const lastBinWithLiquidityIndex = bins.findLastIndex(
-            ({ amountX }) => !amountX.isZero()
-          );
+          let lastBinWithLiquidityIndex = -1;
+          for (let i = bins.length - 1; i >= 0; i--) {
+            if (bins[i].liquiditySupply.toNumber() > 0) {
+              lastBinWithLiquidityIndex = i;
+              break;
+  }
+}
+
           binPriceWithLastLiquidity =
             bins[lastBinWithLiquidityIndex].price.toString();
           count = -1;

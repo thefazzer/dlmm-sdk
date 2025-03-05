@@ -1,5 +1,4 @@
-
-
+import { Decimal } from 'decimal.js';
 import { Quote } from '../types';
 import { CircularBuffer } from '../utils/CircularBuffer';
 import { isValidQuote } from '../utils/guards';
@@ -7,7 +6,7 @@ import { AnalyticsError } from '../utils/guards';
 
 export class QuoteService {
   private readonly quotes: CircularBuffer<Quote>;
-  
+
   constructor(capacity: number = 300) {
     this.quotes = new CircularBuffer(capacity);
   }
@@ -24,9 +23,23 @@ export class QuoteService {
   }
 
   getSpread(): Decimal {
-    const latest = Array.from(this.quotes).pop();
-    return latest ? 
-      latest.ask.minus(latest.bid) : 
-      new Decimal(0);
+    const latest = this.quotes.peekLast();
+
+    if (!latest || !latest.ask || !latest.bid) {
+      return new Decimal(0);
+    }
+
+    const ask = new Decimal(latest.ask);
+    const bid = new Decimal(latest.bid);
+
+    if (ask.lessThan(bid)) {
+      throw new AnalyticsError(
+        'Invalid spread: ask price is lower than bid price',
+        'INVALID_SPREAD',
+        latest
+      );
+    }
+
+    return ask.minus(bid);
   }
 }

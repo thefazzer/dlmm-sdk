@@ -2,7 +2,7 @@ import { PublicKey } from '@solana/web3.js';
 import { DLMM } from '../dlmm';
 import { PoolInfo, BatchProcessingOptions, DEFAULT_BATCH_OPTIONS } from '../../../src/types/poolTypes';
 import { PoolEventEmitter, createBarrier } from '../../../src/utils/eventEmitter';
-import { createConnection, safelyCloseConnection, withRetry } from '../../../src/utils/connectionManager';
+import { createConnection, safelyCloseConnection, withRetry } from './connectionManager';
 
 /**
  * Processes a batch of DLMM pools

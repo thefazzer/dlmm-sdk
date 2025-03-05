@@ -2,10 +2,12 @@ import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
 import { DLMM } from "../dlmm/index";
 import { AccountLayout } from "@solana/spl-token";
 import Decimal from "decimal.js";
-// import { BN } from "@coral-xyz/anchor";
+//import { BN } from "@coral-xyz/anchor";
 import { deriveOracle } from "../dlmm/helpers/derive";
 
-import BN from "bn.js";
+import BN from "bn.js";  // ✅ Correct
+
+import { describe, it } from "node:test";
 
 // Meteora DLMM Program ID
 const DLMM_PROGRAM_ID = new PublicKey("LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo");

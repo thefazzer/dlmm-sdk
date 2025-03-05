@@ -1,14 +1,15 @@
-import express from 'express';
-import cors from 'cors';
-import { fetchPools, fetchPoolsStreaming } from '../server/batchProcessor';
+import * as express from "express"
+import * as cors from 'cors';
+import WebSocket from 'ws'; // Works with esModuleInterop enabled
+import { fetchPools, fetchPoolsStreaming } from './batchProcessor';
 import { PoolInfo, BatchProcessingOptions } from '../../../src/types/poolTypes';
-import WebSocket from 'ws';
 
-const app = express();
+const app = express.default(); // Use `.default()` if `esModuleInterop` is not enabled
+
 const PORT = process.env.PORT || 5000;
 
 // Enable CORS for all routes
-app.use(cors());
+app.use(cors.default);
 app.use(express.json());
 
 // Store active WebSocket connections

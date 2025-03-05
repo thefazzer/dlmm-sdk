@@ -1,7 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
 import { DLMM } from '../dlmm';
 import { fetchPools } from '../server/batchProcessor';
-import { createConnection, safelyCloseConnection } from '../../../src/utils/connectionManager';
+import { createConnection, safelyCloseConnection } from '../server/connectionManager';
 
 // Mock the DLMM module
 jest.mock('../dlmm');

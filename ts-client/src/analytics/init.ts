@@ -3,6 +3,7 @@
 import { configureDecimal } from './utils/decimal';
 import { logger } from './utils/logger';
 import { validateConfig } from './config';
+import Decimal from 'decimal.js';
 
 export async function initializeAnalytics(config: unknown): Promise<void> {
   try {

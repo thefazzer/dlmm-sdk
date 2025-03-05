@@ -2,7 +2,8 @@ import { Connection, PublicKey } from '@solana/web3.js';
 import express from 'express';
 import { DLMM } from '../dlmm';
 import { BinArrayAccount, LbPosition } from '../dlmm/types';
-import { BN } from 'bn.js';
+import BN from "bn.js";  // ✅ Correct
+
 import { convertToPosition } from './utils';
 
 declare global {
