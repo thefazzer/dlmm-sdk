@@ -1,55 +1,56 @@
-def download_audio_only(url, output_path=None):
-    """Download audio only from a YouTube video."""
-    if output_path is None:
-        output_path = tempfile.mktemp(suffix=".m4a")  # Use .m4a instead of .aac
+def create_media_item(song_name, war_topic):
+    """Create a media item combining a Madonna song with war footage."""
+    logger.info(f"Creating media item for '{song_name}' with '{war_topic}'")
     
-    logger.debug(f"Downloading audio from {url} to {output_path}")
+    # Find the matching data in our hardcoded dataset
+    madonna_war_data = get_madonna_war_data()
+    item = None
     
-    try:
-        yt = YouTube(url)
-        audio_stream = yt.streams.filter(only_audio=True).first()
-        
-        if not audio_stream:
-            logger.error(f"No audio stream found for {url}")
-            return None
-            
-        # Download the file
-        audio_stream.download(filename=output_path)
-        
-        # Verify the file exists and has content
-        if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
-            logger.error(f"Downloaded audio file {output_path} doesn't exist or is empty")
-            return None
-            
-        return output_path
-    except Exception as e:
-        logger.error(f"Error downloading audio: {str(e)}")
+    for data_item in madonna_war_data:
+        if data_item['song_title'].lower() == song_name.lower():
+            item = data_item
+            break
+    
+    if not item:
+        # If no exact match, use the first item as fallback
+        item = madonna_war_data[0]
+        logger.warning(f"No data found for '{song_name}', using '{item['song_title']}' instead")
+    
+    # Download audio from Madonna song
+    audio_path = download_audio_only(item['song_url'])
+    if not audio_path:
+        logger.error(f"Failed to download audio for {song_name}")
         return None
-
-def download_video_only(url, output_path=None):
-    """Download video only from a YouTube video."""
-    if output_path is None:
-        output_path = tempfile.mktemp(suffix=".mp4")
-    
-    logger.debug(f"Downloading video from {url} to {output_path}")
-    
-    try:
-        yt = YouTube(url)
-        video_stream = yt.streams.filter(only_video=True).first()
         
-        if not video_stream:
-            logger.error(f"No video stream found for {url}")
+    # Download video for war footage
+    if item['war_url']:
+        video_path = download_video_only(item['war_url'])
+        if not video_path:
+            logger.error(f"Failed to download video for {war_topic}")
             return None
-            
-        # Download the file
-        video_stream.download(filename=output_path)
-        
-        # Verify the file exists and has content
-        if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
-            logger.error(f"Downloaded video file {output_path} doesn't exist or is empty")
+    else:
+        # Use a default video if war_url is None
+        video_path = download_video_only("https://www.youtube.com/watch?v=8a8fqGpHgsk")
+        if not video_path:
+            logger.error(f"Failed to download default video for {war_topic}")
             return None
-            
+    
+    # Create title and byline
+    title = f"{item['song_title']} ({item['song_year']}) - {item['war_date']}"
+    byline = item['war_title']
+    
+    # Combine audio and video
+    output_path = combine_audio_video(
+        audio_path, 
+        video_path, 
+        title=title,
+        byline=byline,
+        commentary=item['commentary']
+    )
+    
+    if output_path:
+        logger.info(f"Successfully created media item: {output_path}")
         return output_path
-    except Exception as e:
-        logger.error(f"Error downloading video: {str(e)}")
+    else:
+        logger.error(f"Failed to combine audio and video for {song_name} + {war_topic}")
         return None
