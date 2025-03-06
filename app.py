@@ -4,9 +4,6 @@ import pandas as pd
 import plotly.express as px
 import time
 from datetime import datetime
-from websocket import WebSocketApp
-import threading
-import json
 
 st.set_page_config(
     page_title="DLMM Pool Explorer",
@@ -20,14 +17,9 @@ if 'pools' not in st.session_state:
     st.session_state.pools = []
 if 'last_refresh' not in st.session_state:
     st.session_state.last_refresh = 0
-if 'processing' not in st.session_state:
-    st.session_state.processing = False
-if 'progress' not in st.session_state:
-    st.session_state.progress = 0
 
 # API configuration
 API_BASE_URL = "http://localhost:5000"
-WS_URL = "ws://localhost:5000"
 
 # Sidebar
 st.sidebar.title("DLMM Pool Explorer")
@@ -42,86 +34,43 @@ st.title("DLMM Pool Explorer")
 st.write("Fetching and displaying DLMM pools from Solana blockchain.")
 
 # Function to fetch pools
-def fetch_pools_rest():
-    st.session_state.processing = True
-    st.session_state.pools = []
+def fetch_pools():
     st.session_state.last_refresh = time.time()
-    
-    try:
-        with st.spinner("Fetching pools..."):
-            endpoint = "/get_test_pools" if pool_limit <= 20 else "/get_pools"
-            try:
-                response = requests.get(
-                    f"{API_BASE_URL}{endpoint}",
-                    params={
-                        "rpc_url": rpc_url,
-                        "limit": pool_limit,
-                        "batch_size": pool_limit,
-                        "concurrency": 5,
-                        "cluster": cluster
-                    },
-                    timeout=120
-                )
-                
-                if response.status_code == 200:
-                    st.session_state.pools = response.json()
-                    st.success(f"Successfully fetched {len(st.session_state.pools)} pools")
-                else:
-                    st.error(f"Failed to fetch pools: {response.text}")
-            except requests.exceptions.ConnectionError:
-                st.error(f"Connection refused. Make sure the server is running at {API_BASE_URL}")
-            except Exception as e:
-                st.error(f"Request error: {str(e)}")
-    except Exception as e:
-        st.error(f"Error: {str(e)}")
-    finally:
-        st.session_state.processing = False
-
-# Function to fetch pools via WebSocket
-def fetch_pools_ws():
-    st.session_state.processing = True
-    st.session_state.pools = []
-    st.session_state.progress = 0
-    st.session_state.last_refresh = time.time()
-    
-    # Create WebSocket connection in a separate thread
-    def ws_thread():
+    with st.spinner("Fetching pool data..."):
         try:
-            # Use the correct import for WebSocketApp
-            from websocket import WebSocketApp
-            
-            ws = WebSocketApp(
-                WS_URL,
-                on_message=on_ws_message,
-                on_error=lambda ws, error: st.error(f"WebSocket error: {error}"),
-                on_close=lambda ws, close_status_code, close_msg: None
-            )
-            
-            def on_open(ws):
-                ws.send(json.dumps({
-                    "action": "fetch_pools_streaming",
+            response = requests.get(
+                f"{API_BASE_URL}/get_test_pools",
+                params={
                     "rpc_url": rpc_url,
-                    "batch_size": pool_limit,
-                    "concurrency": 5,
+                    "limit": pool_limit,
                     "cluster": cluster
-                }))
-            
-            ws.on_open = on_open
-            ws.run_forever()
+                },
+                timeout=60
+            )
+
+            if response.status_code == 200:
+                pools = response.json()
+                if len(pools) == 0:
+                    st.warning("No pools found.")
+                    return []
+                else:
+                    st.success(f"Successfully fetched {len(pools)} pools")
+                    return pools
+            else:
+                st.error(f"Failed to fetch pool data: {response.text}")
+                return []
         except Exception as e:
-            st.error(f"WebSocket connection error: {str(e)}")
-            st.session_state.processing = False
-    
-    threading.Thread(target=ws_thread, daemon=True).start()
+            st.error(f"Error fetching pools: {str(e)}")
+            return []
 
 # Check if we need to auto-refresh
 current_time = time.time()
 if auto_refresh and (current_time - st.session_state.last_refresh > refresh_interval):
-    fetch_pools_rest()
+    st.session_state.pools = fetch_pools()
 
 # Fetch button
 if st.button("Fetch Pools"):
-    fetch_pools_rest()
+    st.session_state.pools = fetch_pools()
 
 # Display pool data
 if st.session_state.pools:
