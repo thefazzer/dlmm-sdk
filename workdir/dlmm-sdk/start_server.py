@@ -21,37 +21,35 @@ def compile_typescript():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     
     # Check if the compiled file exists
-    if not os.path.exists('ts-client/dist/server/unifiedServer.js'):
-        # Check if the file exists in a different location
+    server_file_path = 'ts-client/dist/server/serverMain.js'
+    if not os.path.exists(server_file_path):
+        # Look for the file in alternative locations
         possible_locations = [
-            'ts-client/dist/src/server/unifiedServer.js',
-            'ts-client/lib/server/unifiedServer.js',
-            'ts-client/build/server/unifiedServer.js'
+            'ts-client/dist/src/server/serverMain.js',
+            'ts-client/dist/serverMain.js',
+            'ts-client/dist/server/serverMain.cjs',
+            'ts-client/dist/src/server/serverMain.cjs'
         ]
         
         for location in possible_locations:
             if os.path.exists(location):
                 print(f"Found compiled file at {location}")
-                # Create the directory structure if it doesn't exist
-                os.makedirs(os.path.dirname('ts-client/dist/server/unifiedServer.js'), exist_ok=True)
-                # Copy the file to the expected location
-                shutil.copy(location, 'ts-client/dist/server/unifiedServer.js')
+                server_file_path = location
                 break
         else:
-            print("Could not find the compiled unifiedServer.js file!")
+            print("Could not find the compiled server file!")
             print("Available files in ts-client/dist:")
             for root, dirs, files in os.walk('ts-client/dist'):
                 for file in files:
                     print(os.path.join(root, file))
-            return False
+            return False, None
     
-    return True
+    return True, server_file_path
 
-def start_server():
-    print("Starting the server...")
-    # Adjust the path to your server script as needed
+def start_server(server_file_path):
+    print(f"Starting the server using {server_file_path}...")
     server_process = subprocess.Popen(
-        ["node", "ts-client/dist/server/unifiedServer.js"],
+        ["node", server_file_path],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
     )
@@ -81,8 +79,9 @@ def start_streamlit():
 
 if __name__ == "__main__":
     # First compile the TypeScript code
-    if compile_typescript():
-        server_process = start_server()
+    success, server_file_path = compile_typescript()
+    if success:
+        server_process = start_server(server_file_path)
         if server_process:
             streamlit_process = start_streamlit()
             
