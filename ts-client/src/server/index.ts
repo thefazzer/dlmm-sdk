@@ -592,6 +592,17 @@ app.post("/dlmm/claim-all-rewards", async (req, res) => {
   }
 })
 
+import { startServer, stopServer } from './unifiedServer';
+
+export {
+  startServer,
+  stopServer
+};
+
+// Start the server if this file is run directly
+if (require.main === module) {
+  startServer();
+}
 
 app.listen(3000, () => {
   console.log('Server is running on http://localhost:3000');
