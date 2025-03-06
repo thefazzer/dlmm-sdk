@@ -2,7 +2,6 @@ import subprocess
 import time
 import os
 import sys
-import shutil
 
 def compile_typescript():
     print("Compiling TypeScript code...")
@@ -14,35 +13,19 @@ def compile_typescript():
         print("Installing dependencies...")
         subprocess.run(["npm", "install"], check=True)
     
-    # Compile TypeScript
-    result = subprocess.run(["npm", "run", "build"], check=True)
+    # Compile the simple server directly with tsc
+    print("Compiling simple server...")
+    subprocess.run(["npx", "tsc", "--skipLibCheck", "--esModuleInterop", 
+                   "src/server/simpleServer.ts", "--outDir", "dist/server"], check=True)
     
     # Go back to the original directory
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     
     # Check if the compiled file exists
-    server_file_path = 'ts-client/dist/server/serverMain.js'
+    server_file_path = 'ts-client/dist/server/simpleServer.js'
     if not os.path.exists(server_file_path):
-        # Look for the file in alternative locations
-        possible_locations = [
-            'ts-client/dist/src/server/serverMain.js',
-            'ts-client/dist/serverMain.js',
-            'ts-client/dist/server/serverMain.cjs',
-            'ts-client/dist/src/server/serverMain.cjs'
-        ]
-        
-        for location in possible_locations:
-            if os.path.exists(location):
-                print(f"Found compiled file at {location}")
-                server_file_path = location
-                break
-        else:
-            print("Could not find the compiled server file!")
-            print("Available files in ts-client/dist:")
-            for root, dirs, files in os.walk('ts-client/dist'):
-                for file in files:
-                    print(os.path.join(root, file))
-            return False, None
+        print("Could not find the compiled server file!")
+        return False, None
     
     return True, server_file_path
 
