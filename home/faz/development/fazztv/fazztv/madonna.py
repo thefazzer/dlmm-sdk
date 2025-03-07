@@ -1,56 +1,39 @@
-def create_media_item(song_name, war_topic):
-    """Create a media item combining a Madonna song with war footage."""
-    logger.info(f"Creating media item for '{song_name}' with '{war_topic}'")
+def main():
+    """Main function to create Madonna Military History FazzTV broadcast."""
+    logger.info("=== Starting Madonna Military History FazzTV broadcast ===")
     
-    # Find the matching data in our hardcoded dataset
-    madonna_war_data = get_madonna_war_data()
-    item = None
+    # Define Madonna songs and war documentaries
+    MADONNA_SONGS = [
+        "Like a Prayer", 
+        "Hung Up", 
+        "Justify My Love", 
+        "Into the Groove", 
+        "Express Yourself", 
+        "Vogue"
+    ]
     
-    for data_item in madonna_war_data:
-        if data_item['song_title'].lower() == song_name.lower():
-            item = data_item
-            break
+    WAR_DOCUMENTARIES = [
+        "The North African Campaign: Desert Warfare",
+        "Pearl Harbor: Day of Infamy",
+        "The Battle of the Bulge: Hitler's Last Blood-Soaked Gamble",
+        "Battle of Stalingrad: The Turning Point",
+        "The Battle of Midway: Turning Point in the Pacific",
+        "D-Day: The Allied Invasion of Normandy"
+    ]
     
-    if not item:
-        # If no exact match, use the first item as fallback
-        item = madonna_war_data[0]
-        logger.warning(f"No data found for '{song_name}', using '{item['song_title']}' instead")
+    # Create a list to store all created media items
+    created_items = []
     
-    # Download audio from Madonna song
-    audio_path = download_audio_only(item['song_url'])
-    if not audio_path:
-        logger.error(f"Failed to download audio for {song_name}")
-        return None
-        
-    # Download video for war footage
-    if item['war_url']:
-        video_path = download_video_only(item['war_url'])
-        if not video_path:
-            logger.error(f"Failed to download video for {war_topic}")
-            return None
-    else:
-        # Use a default video if war_url is None
-        video_path = download_video_only("https://www.youtube.com/watch?v=8a8fqGpHgsk")
-        if not video_path:
-            logger.error(f"Failed to download default video for {war_topic}")
-            return None
+    # Process each pair
+    for i in range(len(MADONNA_SONGS)):
+        media_item = create_media_item(MADONNA_SONGS[i], WAR_DOCUMENTARIES[i % len(WAR_DOCUMENTARIES)])
+        if media_item:
+            created_items.append(media_item)
     
-    # Create title and byline
-    title = f"{item['song_title']} ({item['song_year']}) - {item['war_date']}"
-    byline = item['war_title']
+    # Report results
+    logger.info(f"=== Completed Madonna Military History FazzTV broadcast ===")
+    logger.info(f"Created {len(created_items)} media items:")
+    for item in created_items:
+        logger.info(f"  - {item}")
     
-    # Combine audio and video
-    output_path = combine_audio_video(
-        audio_path, 
-        video_path, 
-        title=title,
-        byline=byline,
-        commentary=item['commentary']
-    )
-    
-    if output_path:
-        logger.info(f"Successfully created media item: {output_path}")
-        return output_path
-    else:
-        logger.error(f"Failed to combine audio and video for {song_name} + {war_topic}")
-        return None
+    return created_items
