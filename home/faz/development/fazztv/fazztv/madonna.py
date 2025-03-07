@@ -1,39 +1,31 @@
-def main():
-    """Main function to create Madonna Military History FazzTV broadcast."""
-    logger.info("=== Starting Madonna Military History FazzTV broadcast ===")
+def combine_audio_video(audio_path, video_path, output_path=None, title=None, byline=None, commentary=None):
+    """Combine audio and video files with title, byline, and commentary."""
+    if output_path is None:
+        # Create output in parent directory if not specified
+        parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        output_path = os.path.join(parent_dir, f"madonna_war_{int(time.time())}.mp4")
     
-    # Define Madonna songs and war documentaries
-    MADONNA_SONGS = [
-        "Like a Prayer", 
-        "Hung Up", 
-        "Justify My Love", 
-        "Into the Groove", 
-        "Express Yourself", 
-        "Vogue"
-    ]
+    logger.debug(f"Combining {audio_path} and {video_path} to {output_path}")
     
-    WAR_DOCUMENTARIES = [
-        "The North African Campaign: Desert Warfare",
-        "Pearl Harbor: Day of Infamy",
-        "The Battle of the Bulge: Hitler's Last Blood-Soaked Gamble",
-        "Battle of Stalingrad: The Turning Point",
-        "The Battle of Midway: Turning Point in the Pacific",
-        "D-Day: The Allied Invasion of Normandy"
-    ]
+    # Verify input files exist
+    if not os.path.exists(audio_path):
+        logger.error(f"Audio file {audio_path} does not exist")
+        return None
+        
+    if not os.path.exists(video_path):
+        logger.error(f"Video file {video_path} does not exist")
+        return None
     
-    # Create a list to store all created media items
-    created_items = []
+    # Create temporary files for text overlays
+    marquee_text_file = tempfile.mktemp(suffix=".txt")
+    with open(marquee_text_file, "w") as f:
+        f.write(commentary if commentary else "")
     
-    # Process each pair
-    for i in range(len(MADONNA_SONGS)):
-        media_item = create_media_item(MADONNA_SONGS[i], WAR_DOCUMENTARIES[i % len(WAR_DOCUMENTARIES)])
-        if media_item:
-            created_items.append(media_item)
+    byline_text_file = tempfile.mktemp(suffix=".txt")
+    with open(byline_text_file, "w") as f:
+        f.write(byline if byline else "")
     
-    # Report results
-    logger.info(f"=== Completed Madonna Military History FazzTV broadcast ===")
-    logger.info(f"Created {len(created_items)} media items:")
-    for item in created_items:
-        logger.info(f"  - {item}")
+    # Ensure the output directory exists
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     
-    return created_items
+    # Rest of the function remains the same
