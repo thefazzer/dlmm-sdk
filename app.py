@@ -109,11 +109,10 @@ if st.session_state.pools:
             'binStep', 
             'activeId', 
             'activePriceUI', 
-            'dynamicFee'
-        ]].assign(
-            tokenX=df['tokenX'].apply(lambda x: x['mint']),
-            tokenY=df['tokenY'].apply(lambda x: x['mint'])
-        ),
+            'dynamicFee',
+            'tokenX.mint',  # Use flattened column names
+            'tokenY.mint'   # Use flattened column names
+        ]],
         use_container_width=True
     )
     
