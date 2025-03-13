@@ -1,4 +1,8 @@
-import BN from "bn.js";
+import BN from 'bn.js';
+
+// Attach BN globally
+(global as any).BN = BN;
+
 import { SCALE_OFFSET } from "../constants";
 
 const MAX_EXPONENTIAL = new BN(0x80000);

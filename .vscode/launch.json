@@ -1,6 +1,18 @@
 {
     "version": "0.2.0",
-    "configurations": [
+                        "configurations":
+        [
+              {
+                "type": "node",
+                "request": "launch",
+                "name": "Launch unifiedServer",
+                "runtimeExecutable": "npx",
+                "runtimeArgs": ["ts-node"],
+                "args": ["/workdir/dlmm-sdk/ts-client/src/server/unifiedServer.ts"],
+                "cwd": "${workspaceFolder}",
+                "sourceMaps": true,
+                "console": "integratedTerminal"    
+        }, 
         {
             "name": "Streamlit Debugger",
             "type": "debugpy",

@@ -53,21 +53,10 @@ function createConnection(rpcUrl) {
     };
     return new web3_js_1.Connection(rpcUrl, config);
 }
-/**
- * Safely closes a Solana connection
- * @param connection The connection to close
- */
+// connectionManager.ts
 function safelyCloseConnection(connection) {
-    try {
-        // Check if connection and _rpcWebSocket exist before attempting to close
-        if (connection &&
-            connection._rpcWebSocket &&
-            typeof connection._rpcWebSocket.close === 'function') {
-            connection._rpcWebSocket.close();
-        }
-    }
-    catch (e) {
-        console.warn("Warning: Could not close connection cleanly", e);
+    if (connection && typeof connection.close === 'function') {
+        connection.close();
     }
 }
 /**

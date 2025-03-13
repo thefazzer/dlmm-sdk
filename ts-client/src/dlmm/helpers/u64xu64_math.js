@@ -1,8 +1,13 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ONE = void 0;
 exports.pow = pow;
-var bn_js_1 = require("bn.js");
+var bn_js_1 = __importDefault(require("bn.js"));
+// Attach BN globally
+global.BN = bn_js_1.default;
 var constants_1 = require("../constants");
 var MAX_EXPONENTIAL = new bn_js_1.default(0x80000);
 exports.ONE = new bn_js_1.default(1).shln(constants_1.SCALE_OFFSET);

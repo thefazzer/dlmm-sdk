@@ -1,3 +1,8 @@
+
+// unifiedServer.ts (at the very top)
+import BN from 'bn.js';
+(global as any).BN = BN;
+
 import express from 'express';
 import cors from 'cors';
 import WebSocket from 'ws';

@@ -15,22 +15,10 @@ export function createConnection(rpcUrl: string): Connection {
   return new Connection(rpcUrl, config);
 }
 
-/**
- * Safely closes a Solana connection
- * @param connection The connection to close
- */
-export function safelyCloseConnection(connection: Connection): void {
-  try {
-    // Check if connection and _rpcWebSocket exist before attempting to close
-    if (
-      connection && 
-      (connection as any)._rpcWebSocket && 
-      typeof (connection as any)._rpcWebSocket.close === 'function'
-    ) {
-      (connection as any)._rpcWebSocket.close();
-    }
-  } catch (e) {
-    console.warn("Warning: Could not close connection cleanly", e);
+// connectionManager.ts
+export function safelyCloseConnection(connection: any) {
+  if (connection && typeof connection.close === 'function') {
+    connection.close();
   }
 }
 
