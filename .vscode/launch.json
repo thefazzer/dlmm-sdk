@@ -34,6 +34,19 @@
                 "start_server.py",
                 "--server.port",
                 "8501"
+        {
+            "name": "DLMM Explorer Debug",
+            "type": "python",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "."
+                }
             ]
         }
     ]
