@@ -135,14 +135,14 @@ if st.session_state.pools:
         with col2:
             st.subheader("Token Information")
             st.write("**Token X**")
-            st.write(f"Mint: {pool_data['tokenX']['mint']}")
-            st.write(f"Decimal: {pool_data['tokenX']['decimal']}")
-            st.write(f"Amount: {pool_data['tokenX']['amount']}")
+            st.write(f"Mint: {pool_data['tokenX.mint']}")
+            st.write(f"Decimal: {pool_data['tokenX.decimal']}")
+            st.write(f"Amount: {pool_data['tokenX.amount']}")
             
             st.write("**Token Y**")
-            st.write(f"Mint: {pool_data['tokenY']['mint']}")
-            st.write(f"Decimal: {pool_data['tokenY']['decimal']}")
-            st.write(f"Amount: {pool_data['tokenY']['amount']}")
+            st.write(f"Mint: {pool_data['tokenY.mint']}")
+            st.write(f"Decimal: {pool_data['tokenY.decimal']}")
+            st.write(f"Amount: {pool_data['tokenY.amount']}")
             
         st.subheader("Fee Information")
         col1, col2, col3 = st.columns(3)
