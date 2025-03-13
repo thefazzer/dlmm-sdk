@@ -33,11 +33,10 @@ auto_refresh = st.sidebar.checkbox("Auto-refresh data", value=False)
 refresh_interval = st.sidebar.slider("Refresh interval (seconds)", 10, 300, 60)
 
 # Main content
-col1, col2 = st.columns([1, 10])
-with col1:
-    st.image("ts-client/deltalon-logo.png", width=50)
-with col2:
-    st.title("DLMM Pool Explorer")
+# col1, col2 = st.columns([1, 10])
+# with col1:
+st.image("ts-client/deltalon-logo.png", width=150)
+st.title("Deltalon DLMM Pool Explorer")
 st.write("Fetching and displaying DLMM pools from Solana blockchain.")
 
 # Function to fetch pools
