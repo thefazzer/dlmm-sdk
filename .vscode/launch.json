@@ -34,9 +34,11 @@
                 "start_server.py",
                 "--server.port",
                 "8501"
+            ]
+        },
         {
             "name": "DLMM Explorer Debug",
-            "type": "python",
+            "type": "debugpy",
             "request": "attach",
             "connect": {
                 "host": "localhost",
