@@ -84,76 +84,72 @@ if st.session_state.pools:
     st.header("Summary Statistics")
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Total Pools", len(df))
-    col2.metric("Unique Token X", df['tokenX']['mint'].nunique())
-    col3.metric("Unique Token Y", df['tokenY']['mint'].nunique())
+    col2.metric("Unique Token X", df['tokenX.mint'].nunique())
+    col3.metric("Unique Token Y", df['tokenY.mint'].nunique())
     
     try:
         col4.metric("Average Dynamic Fee", f"{pd.to_numeric(df['dynamicFee'], errors='coerce').mean():.2f}%")
     except:
         col4.metric("Average Dynamic Fee", "N/A")
-    
-    # Distribution of bin steps
-    st.subheader("Distribution of Bin Steps")
-    bin_step_counts = df['binStep'].value_counts().reset_index()
-    bin_step_counts.columns = ['Bin Step', 'Count']
-    fig = px.bar(bin_step_counts, x='Bin Step', y='Count')
-    st.plotly_chart(fig, use_container_width=True)
-    
-    # Pool explorer
-    st.header("Pool Explorer")
-    
-    # Display all pools in a table
-    st.dataframe(
-        df[[
-            'pubkey', 
-            'binStep', 
-            'activeId', 
-            'activePriceUI', 
-            'dynamicFee'
-        ]].assign(
-            tokenX=df['tokenX'].apply(lambda x: x['mint']),
-            tokenY=df['tokenY'].apply(lambda x: x['mint'])
-        ),
-        use_container_width=True
-    )
-    
-    # Pool details
-    st.header("Pool Details")
-    selected_pool = st.selectbox("Select a pool", df['pubkey'].tolist())
-    
-    if selected_pool:
-        pool_data = df[df['pubkey'] == selected_pool].iloc[0]
+
+        # Distribution of bin steps
+        st.subheader("Distribution of Bin Steps")
+        bin_step_counts = df['binStep'].value_counts().reset_index()
+        bin_step_counts.columns = ['Bin Step', 'Count']
+        fig = px.bar(bin_step_counts, x='Bin Step', y='Count')
+        st.plotly_chart(fig, use_container_width=True)
         
-        col1, col2 = st.columns(2)
-        with col1:
-            st.subheader("Basic Information")
-            st.write(f"**Pool Address:** {pool_data['pubkey']}")
-            st.write(f"**Bin Step:** {pool_data['binStep']}")
-            st.write(f"**Active Bin ID:** {pool_data['activeId']}")
-            st.write(f"**Active Price:** {pool_data['activePriceUI']}")
-            st.write(f"**Dynamic Fee:** {pool_data['dynamicFee']}%")
-            
-        with col2:
-            st.subheader("Token Information")
-            st.write("**Token X**")
-            st.write(f"Mint: {pool_data['tokenX']['mint']}")
-            st.write(f"Decimal: {pool_data['tokenX']['decimal']}")
-            st.write(f"Amount: {pool_data['tokenX']['amount']}")
-            
-            st.write("**Token Y**")
-            st.write(f"Mint: {pool_data['tokenY']['mint']}")
-            st.write(f"Decimal: {pool_data['tokenY']['decimal']}")
-            st.write(f"Amount: {pool_data['tokenY']['amount']}")
-            
-        st.subheader("Fee Information")
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Base Fee Rate", f"{pool_data['feeInfo']['baseFeeRatePercentage']}%")
-        col2.metric("Max Fee Rate", f"{pool_data['feeInfo']['maxFeeRatePercentage']}%")
-        col3.metric("Protocol Fee", f"{pool_data['feeInfo']['protocolFeePercentage']}%")
+        # Pool explorer
+        st.header("Pool Explorer")
         
-        # Show raw JSON
-        with st.expander("View Raw JSON"):
-            st.json(pool_data.to_dict())
+        # Display all pools in a table
+        st.dataframe(
+            df[[
+                'pubkey', 
+                'binStep', 
+                'activeId', 
+                'activePriceUI', 
+                'dynamicFee',
+                'tokenX.mint',
+                'tokenY.mint'
+            ]],
+            use_container_width=True
+        )
+        
+        # Pool details
+        if selected_pool:
+            pool_data = df[df['pubkey'] == selected_pool].iloc[0]
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                st.subheader("Basic Information")
+                st.write(f"**Pool Address:** {pool_data['pubkey']}")
+                st.write(f"**Bin Step:** {pool_data['binStep']}")
+                st.write(f"**Active Bin ID:** {pool_data['activeId']}")
+                st.write(f"**Active Price:** {pool_data['activePriceUI']}")
+                st.write(f"**Dynamic Fee:** {pool_data['dynamicFee']}%")
+                
+            with col2:
+                st.subheader("Token Information")
+                st.write("**Token X**")
+                st.write(f"Mint: {pool_data['tokenX.mint']}")
+                st.write(f"Decimal: {pool_data['tokenX.decimal']}")
+                st.write(f"Amount: {pool_data['tokenX.amount']}")
+                
+                st.write("**Token Y**")
+                st.write(f"Mint: {pool_data['tokenY.mint']}")
+                st.write(f"Decimal: {pool_data['tokenY.decimal']}")
+                st.write(f"Amount: {pool_data['tokenY.amount']}")
+                
+            st.subheader("Fee Information")
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Base Fee Rate", f"{pool_data['feeInfo.baseFeeRatePercentage']}%")
+            col2.metric("Max Fee Rate", f"{pool_data['feeInfo.maxFeeRatePercentage']}%")
+            col3.metric("Protocol Fee", f"{pool_data['feeInfo.protocolFeePercentage']}%")
+
+            # Show raw JSON
+            with st.expander("View Raw JSON"):
+                st.json(pool_data.to_dict())
 else:
     st.info("No pools loaded. Use the button above to fetch pool data.")
 
