@@ -77,20 +77,20 @@ if st.button("Fetch Pools"):
 
 # Display pool data
 if st.session_state.pools:
-        # Convert to DataFrame and flatten nested dictionaries
-        df = pd.json_normalize(st.session_state.pools)
-        
-        # Display summary stats
-        st.header("Summary Statistics")
-        col1, col2, col3, col4 = st.columns(4)
-        col1.metric("Total Pools", len(df))
-        col2.metric("Unique Token X", df['tokenX.mint'].nunique())
-        col3.metric("Unique Token Y", df['tokenY.mint'].nunique())
-        
-        try:
-            col4.metric("Average Dynamic Fee", f"{pd.to_numeric(df['dynamicFee'], errors='coerce').mean():.2f}%")
-        except:
-            col4.metric("Average Dynamic Fee", "N/A")
+    # Convert to DataFrame and flatten nested dictionaries
+    df = pd.json_normalize(st.session_state.pools)
+    
+    # Display summary stats
+    st.header("Summary Statistics")
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Total Pools", len(df))
+    col2.metric("Unique Token X", df['tokenX.mint'].nunique())
+    col3.metric("Unique Token Y", df['tokenY.mint'].nunique())
+    
+    try:
+        col4.metric("Average Dynamic Fee", f"{pd.to_numeric(df['dynamicFee'], errors='coerce').mean():.2f}%")
+    except:
+        col4.metric("Average Dynamic Fee", "N/A")
 
     # Distribution of bin steps
     st.subheader("Distribution of Bin Steps")
