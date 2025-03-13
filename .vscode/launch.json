@@ -2,39 +2,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: Current File",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal"
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Launch unifiedServer",
-            "runtimeExecutable": "npx",
-            "runtimeArgs": [
-                "ts-node"
-            ],
-            "args": [
-                "/workdir/dlmm-sdk/ts-client/src/server/unifiedServer.ts"
-            ],
-            "cwd": "${workspaceFolder}",
-            "sourceMaps": true,
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "Streamlit Debugger",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "streamlit",
-            "console": "integratedTerminal",
-            "args": [
-                "run",
-                "start_server.py",
-                "--server.port",
-                "8501"
-        {
             "name": "DLMM Explorer Debug",
             "type": "python",
             "request": "attach",
@@ -47,7 +14,8 @@
                     "localRoot": "${workspaceFolder}",
                     "remoteRoot": "."
                 }
-            ]
+            ],
+            "justMyCode": false
         }
     ]
 }
