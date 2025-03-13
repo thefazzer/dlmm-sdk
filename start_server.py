@@ -7,7 +7,7 @@ def start_server():
     print("Starting the server...")
     # Adjust the path to your server script as needed
     server_process = subprocess.Popen(
-        ["node", "ts-client/dist/server/unifiedServer.js"],
+        ["node", "ts-client/dist/ts-client/src/server/unifiedServer.js"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
     )
