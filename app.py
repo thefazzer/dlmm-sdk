@@ -146,9 +146,9 @@ if st.session_state.pools:
             
         st.subheader("Fee Information")
         col1, col2, col3 = st.columns(3)
-        col1.metric("Base Fee Rate", f"{pool_data['feeInfo']['baseFeeRatePercentage']}%")
-        col2.metric("Max Fee Rate", f"{pool_data['feeInfo']['maxFeeRatePercentage']}%")
-        col3.metric("Protocol Fee", f"{pool_data['feeInfo']['protocolFeePercentage']}%")
+        col1.metric("Base Fee Rate", f"{pool_data['feeInfo.baseFeeRatePercentage']}%")
+        col2.metric("Max Fee Rate", f"{pool_data['feeInfo.maxFeeRatePercentage']}%")
+        col3.metric("Protocol Fee", f"{pool_data['feeInfo.protocolFeePercentage']}%")
         
         # Show raw JSON
         with st.expander("View Raw JSON"):
